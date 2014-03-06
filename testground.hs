@@ -14,16 +14,15 @@ lit4 = Lit "Russia's intervention does not violate the International Law" (Tru [
 lit5 = Lit "Russia's intervention is justified" (Tru [Possibly])
 lit6 = Lit "America is behind the Ukraine's crisis" (Tru [Possibly])
 lit7 = Lit "Russia's intervention does not violate the International Law" (Tru [Very])
-
 lit8 = Lit "Russia's intervention is justified" (Fals [Very]) --goal
 
 cnf1 = smartCNF [lit1, lit2, lit3]
 cnf2 = smartCNF [lit4, lit5]
 cnf3 = smartCNF [lit6]
 cnf4 = smartCNF [lit7]
-cnf5 = smartCNF [lit8]
+cnf5 = smartCNF [lit8] -- goal
 
-kb = zip (map lsCNF [cnf1, cnf2, cnf3, cnf4, cnf5]) (repeat MaxT)
+kb = zipWith smartClause [cnf1, cnf2, cnf3, cnf4, cnf5] (repeat MaxT)
 --------------------------------
 
 ----------------------------------------

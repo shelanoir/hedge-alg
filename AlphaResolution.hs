@@ -3,10 +3,12 @@ module AlphaResolution (
         module HedgeTruth,
         module ProsLogic,
         module Data.List,
+        smartClause,
         confidence,
-        resolvent,
+        resolvent,--resolvent :: (Ha hedge) => ([Lit hedge], Truth hedge) -> ([Lit hedge], Truth hedge) -> Maybe [([Lit hedge], Truth hedge)]
         resolution,
-        nilH
+        nilH,
+        Clause(..)
 )
 where
 import Data.List
@@ -15,17 +17,18 @@ import HedgeTruth
 import ProsLogic
 --alpha-resolution
 --
-confidence conf1 conf2 t1 t2 
-        | t1 >< t2 = conf1 `andH` conf2 `andH` (notH (t1 `andH` t2)) `andH` (t1 `orH` t2)
-
+type Clause hedge = ([Lit hedge], Truth hedge)
 nilH :: (Ha hedge) => Lit hedge
 nilH = Lit "" MaxT
 
-resolvent :: (Ha hedge) => 
-                ([Lit hedge], Truth hedge) 
-                -> ([Lit hedge], Truth hedge) 
-                -> Maybe [([Lit hedge], Truth hedge)]
+smartClause :: (Ha hedge) => CNF (Lit hedge) -> Truth hedge -> Clause hedge
+smartClause (CNF lit) confi = (lit, confi)
 
+confidence conf1 conf2 t1 t2 
+        | t1 >< t2 = conf1 `andH` conf2 `andH` (notH (t1 `andH` t2)) `andH` (t1 `orH` t2)
+
+
+resolvent :: (Ha hedge) => Clause hedge -> Clause hedge -> Maybe [(Clause hedge)]
 resolvent ([Lit s1 t1], conf1) ([Lit s2 t2], conf2)
         | s1 == s2, t1 >< t2 = Just [([nilH], confidence conf1 conf2 t1 t2)]
         | otherwise = Nothing
@@ -40,9 +43,9 @@ resolvent (lits1, conf1) (lits2, conf2)
                                    confidence conf1 conf2 (truthLit lit1) (truthLit lit2))     
               result = map (\(a,b)->(sortCNF a, b)) . map step $ resPairs                
 
-resolution :: (Ha hedge) =>
-                [([Lit hedge], Truth hedge)] -> Maybe (Truth hedge)
 
+resolution :: (Ha hedge) =>
+                [Clause hedge] -> Maybe (Truth hedge)
 resolution allClauses  
         | saturizedRes == allClauses = lookup [nilH] saturizedRes
         | otherwise = resolution saturizedRes
