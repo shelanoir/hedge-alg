@@ -42,7 +42,8 @@ resolvent (lits1, conf1) (lits2, conf2)
 
 resolution :: (Ha hedge) =>
                 [([Lit hedge], Truth hedge)] -> Maybe (Truth hedge)
-resolution allClauses 
+
+resolution allClauses  
         | saturizedRes == allClauses = lookup [nilH] saturizedRes
         | otherwise = resolution saturizedRes
         where rawRes = concat (allClauses : [a |Just a <- [res | clause1 <- allClauses, 
