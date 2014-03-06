@@ -4,7 +4,9 @@ import AlphaResolution
 
 ----------------------------------------------------
 ----------------------------------------------------
-                
+
+kbUnionGoal k g = zipWith smartClause (k ++ [g]) (repeat MaxT)
+printClauses = map (\(a,b) -> CNF a)
 
 ---------testing data-----------
 lit1 = Lit "America is behind the Ukraine's crisis" (Fals [More])
@@ -22,9 +24,10 @@ cnf3 = smartCNF [lit6]
 cnf4 = smartCNF [lit7]
 cnf5 = smartCNF [lit8] -- goal
 
-kb = zipWith smartClause [cnf1, cnf2, cnf3, cnf4, cnf5] (repeat MaxT)
 --------------------------------
-
+kb = [cnf1, cnf2, cnf3, cnf4]
+goal = cnf5
+initialClauses = kbUnionGoal kb goal
 ----------------------------------------
 ----------------------------------------
 {-truth1 = Fals [Very,Very,Very,More]
