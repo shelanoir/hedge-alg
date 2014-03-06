@@ -1,4 +1,6 @@
 ----------------------------------------------------
+{-#LANGUAGE ScopedTypeVariables#-}
+import Data.List
 ----------------------------------------------------
 -----------------------
 --Hedge algebra class:
@@ -94,15 +96,16 @@ instance Ord Hedge where
 ----------------------------------------------------
 --Truth value:
 --Truth :: (Ha hedge) => hedge -> Truth hedge -> Truth hedge
---Truth hedge <= Eq, Ord, Show
-data Truth hedge = Tru [hedge] | Fals [hedge] deriving (Eq)
-
+--Truth hedge <= Eq, Ord, Show, bounded by MaxT and MinT
+data Truth hedge = Tru [hedge] | Fals [hedge] | MaxT | MinT deriving (Eq)
 -- Show Truth h        
-instance (Ha h) => Show (Truth h) where
+instance (Show h) => Show (Truth h) where        
         show (Tru []) = "True"
         show (Fals []) = "False"
         show (Tru (x:xs)) = show x ++ " " ++ show (Tru xs)
         show (Fals (x:xs)) = show x ++ " " ++ show (Fals xs)
+        show MaxT = "MaxT"
+        show MinT = "MinT"
 
 isHTrue (Tru h) = True
 isHTrue (Fals h) = False
@@ -124,11 +127,14 @@ notH (Fals h) = Tru h
 _ >< _ = False
 
 
-
 -- Ord Truth h
 -- Here comes the dragon...
 instance Ha h => Ord (Truth h) where
        --basic cases: 
+       compare MaxT t | t /= MaxT = GT
+       compare MinT t | t /= MinT = LT
+       compare t MinT | t /= MinT = GT
+       compare t MaxT | t /= MaxT = LT
        --cover 0-0 case
        compare (Tru _) (Fals _) = GT
        compare (Fals _) (Tru _) = LT
@@ -136,7 +142,6 @@ instance Ha h => Ord (Truth h) where
         
        --exhaustive:
        ---- both True
-
        compare (Tru ls1) (Tru ls2) =
         let hs1 = reverse ls1
             hs2 = reverse ls2
@@ -214,8 +219,8 @@ res2 = compare truth2 truth1
 -- CNF clause of literals = list of literals
 
 ---Literal:
-data Lit = Lit String (Truth Hedge) 
-instance Show Lit where
+data Lit hedge = Lit String (Truth hedge) deriving (Eq)
+instance Show hedge => Show (Lit hedge) where
         show (Lit x truth) = "<" ++ x ++ ": " ++ show truth ++ ">"
 
 truthLit (Lit string truth) = truth 
@@ -227,5 +232,76 @@ instance Show a => Show (CNF a) where
         show (CNF (x:xs)) = show x ++  " OR " ++ (show (CNF xs)) 
 
 lsCNF (CNF a) = a
-        
 
+smartCNF a = CNF (sortCNF a)
+-- CNF lists need to be sorted for ease of comparison
+sortCNF :: (Ha hedge) => [Lit hedge] -> [Lit hedge] 
+sortCNF = sortBy (\(Lit string1 t1) (Lit string2 t2) ->
+                        case () of  
+                            _   | string1 == string2 -> compare t1 t2
+                                | otherwise -> compare string1 string2)
+       
+
+---------testing data-----------
+lit1 = Lit "a" (Fals [More])
+lit2 = Lit "b" (Fals [])
+lit3 = Lit "c" (Tru [Very, More])
+lit4 = Lit "b" (Tru [Less])
+lit5 = Lit "c" (Tru [Possibly])
+lit6 = Lit "a" (Tru [Possibly])
+lit7 = Lit "b" (Tru [Very])
+lit8 = Lit "c" (Fals [Very])
+
+cnf1 = smartCNF [lit1, lit2, lit3]
+cnf2 = smartCNF [lit4, lit5]
+cnf3 = smartCNF [lit6]
+cnf4 = smartCNF [lit7]
+cnf5 = smartCNF [lit8]
+
+kb = zip (map lsCNF [cnf1, cnf2, cnf3, cnf4, cnf5]) (repeat MaxT)
+--------------------------------
+
+----------------------------------------
+----------------------------------------
+--alpha-resolution
+--
+confidence conf1 conf2 t1 t2 
+        | t1 >< t2 = conf1 `andH` conf2 `andH` (notH (t1 `andH` t2)) `andH` (t1 `orH` t2)
+
+nilH :: (Ha hedge) => Lit hedge
+nilH = Lit "" MaxT
+
+resolvent :: (Ha hedge) => 
+                ([Lit hedge], Truth hedge) 
+                -> ([Lit hedge], Truth hedge) 
+                -> Maybe [([Lit hedge], Truth hedge)]
+
+resolvent ([Lit s1 t1], conf1) ([Lit s2 t2], conf2)
+        | s1 == s2, t1 >< t2 = Just [([nilH], confidence conf1 conf2 t1 t2)]
+        | otherwise = Nothing
+
+resolvent (lits1, conf1) (lits2, conf2) 
+        | null result = Nothing
+        | otherwise = Just result
+        where resPairs
+                = [(lit1, lit2) | lit1 <- lits1, lit2 <- lits2, truthLit lit1 >< truthLit lit2,
+                        stringLit lit1 == stringLit lit2]
+              step (lit1, lit2) = ((delete lit1 lits1) ++ (delete lit2 lits2),
+                                   confidence conf1 conf2 (truthLit lit1) (truthLit lit2))     
+              result = map (\(a,b)->(sortCNF a, b)) . map step $ resPairs                
+
+resolution :: (Ha hedge) =>
+                [([Lit hedge], Truth hedge)] -> Maybe (Truth hedge)
+resolution allClauses 
+        | saturizedRes == allClauses = lookup [nilH] saturizedRes
+        | otherwise = resolution saturizedRes
+        where rawRes = concat (allClauses : [a |Just a <- [res | clause1 <- allClauses, 
+                                        clause2 <- allClauses,
+                                        let res = resolvent clause1 clause2
+                                        ]])
+              saturizedRes = nub [(l1, maximum ls2) | 
+                                  (l1,c1) <- rawRes,
+                                  let ls2 = [c2| (l2,c2) <- rawRes, l2 == l1]]
+                                                                
+
+        
