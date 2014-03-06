@@ -58,3 +58,14 @@ resolution allClauses
                                   let ls2 = [c2| (l2,c2) <- rawRes, l2 == l1]]
                                                                 
 
+{-nonAlpha :: (Ha hedge) =>
+                [Clause hedge] -> Maybe [(Truth hedge)]
+nonAlpha allClauses  
+        | saturizedRes == allClauses = filter (\([nilH] saturizedRes
+        | otherwise = resolution saturizedRes
+        where rawRes = concat (allClauses : [a |Just a <- [res | clause1 <- allClauses, 
+                                        clause2 <- allClauses,
+                                        let res = resolvent clause1 clause2
+                                        ]])
+              saturizedRes = nub res 
+-}

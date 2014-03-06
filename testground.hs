@@ -3,6 +3,9 @@ import Ahedge
 import AlphaResolution
 
 ----------------------------------------------------
+--- TODO:
+--- tracing/explaining feature
+--- user interface
 ----------------------------------------------------
 
 kbUnionGoal k g = zipWith smartClause (k ++ [g]) (repeat MaxT)
@@ -19,16 +22,16 @@ litB7 = Lit "Russia's intervention does not violate the International Law" (Tru 
 
 litC8 = Lit "Russia's intervention is justified" (Fals [Very]) --negated goal
 
-cnf1 = smartCNF [lit1, lit2, lit3]
-cnf2 = smartCNF [lit4, lit5]
-cnf3 = smartCNF [lit6]
-cnf4 = smartCNF [lit7]
-cnf5 = smartCNF [lit8] -- negated goal
+cnf1 = smartCNF [litA1, litB2, litC3]
+cnf2 = smartCNF [litB4, litC5]
+cnf3 = smartCNF [litA6]
+cnf4 = smartCNF [litB7]
+cnf5 = smartCNF [litC8] -- negated goal
 
 --------------------------------
 kb = [cnf1, cnf2, cnf3, cnf4]
-goal = cnf5
-initialClauses = kbUnionGoal kb goal
+negatedGoal = cnf5
+initialClauses = kbUnionGoal kb negatedGoal
 ----------------------------------------
 ----------------------------------------
 {-truth1 = Fals [Very,Very,Very,More]
