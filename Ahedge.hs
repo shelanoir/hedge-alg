@@ -1,8 +1,6 @@
 ----------------------------------------------------
 ----------------------------------------------------
---A hedge algebra:
---implementations for ord
---and show went here
+-- A hedge algebra:
 -- Hedge is Ord, Eq and Enum
 -- Hedge is Enum in the sense
 -- that one can list it from
