@@ -10,11 +10,9 @@
 module Ahedge (
         Hedge(..),
         module HedgeClass,
-        module Data.List
 ) 
 where
 import HedgeClass
-import Data.List
 
 data Hedge = Possibly | Very | More | Less deriving (Eq, Show, Enum)
 
