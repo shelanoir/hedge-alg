@@ -17,7 +17,7 @@ import Data.List
 --Truth value:
 --Truth :: (Ha hedge) => hedge -> Truth hedge -> Truth hedge
 --Truth hedge <= Eq, Ord, Show, bounded by MaxT and MinT
-data Truth hedge = Tru [hedge] | Fals [hedge] | MaxT | MinT deriving (Eq)
+data Truth hedge = Tru [hedge] | Fals [hedge] | MaxT | MinT deriving (Eq, Read)
 -- Show Truth h        
 instance (Show h) => Show (Truth h) where        
         show (Tru []) = "True"

@@ -18,7 +18,7 @@ module HedgeClass (
 ) where
 
 import Data.List
-class (Eq a, Ord a, Enum a, Show a) => Ha a where
+class (Eq a, Ord a, Enum a, Show a, Read a) => Ha a where
 
       --positivity, negativity, order of Hedges 
         hedgeLs :: [a]

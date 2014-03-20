@@ -20,7 +20,7 @@ import Data.List
 -- CNF clause of literals = list of literals
 
 ---Literal:
-data Lit hedge = Lit String (Truth hedge) deriving (Eq)
+data Lit hedge = Lit String (Truth hedge) deriving (Eq, Read)
 instance Show hedge => Show (Lit hedge) where
         show (Lit x truth) = "<" ++ x ++ ": " ++ show truth ++ ">"
 

@@ -1,6 +1,9 @@
 import ProsLogic
 import Ahedge
 import AlphaResolution
+import Data.IORef
+import Control.Monad
+import Data.List.Split
 
 ----------------------------------------------------
 --- TODO:

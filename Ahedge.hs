@@ -12,7 +12,7 @@ module Ahedge (
 where
 import HedgeClass
 
-data Hedge = Possibly | Very | More | Less deriving (Eq, Show, Enum)
+data Hedge = Possibly | Very | More | Less deriving (Eq, Show, Enum, Read)
 
 instance (Ha Hedge) where
         posLs = [Very, More]
