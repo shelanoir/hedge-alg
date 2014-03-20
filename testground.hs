@@ -42,3 +42,11 @@ truth2 = Fals [Very,More,Possibly]
 res1 = compare truth1 truth2        
 res2 = compare truth2 truth1
 
+destructive :: IORef Int -> IO ()
+destructive io = modifyIORef io (+1)
+
+main = do
+        io <- newIORef 3
+        destructive io
+        a <- readIORef io
+        putStr $ show a ++ "\n"
