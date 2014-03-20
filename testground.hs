@@ -34,8 +34,8 @@ negatedGoal = cnf5
 initialClauses = kbUnionGoal kb negatedGoal
 ----------------------------------------
 ----------------------------------------
-{-truth1 = Fals [Very,Very,Very,More]
-truth2 = Fals [More,Possibly]
+truth1 = Fals [Very,Very,Very,More]
+truth2 = Fals [Very,More,Possibly]
 res1 = compare truth1 truth2        
-res2 = compare truth2 truth1-}
+res2 = compare truth2 truth1
 
