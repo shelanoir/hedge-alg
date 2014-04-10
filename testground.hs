@@ -4,6 +4,7 @@ import AlphaResolution
 import Data.IORef
 import Control.Monad
 import Data.List.Split
+import Data.Char
 
 ----------------------------------------------------
 --- TODO:
@@ -44,9 +45,14 @@ res2 = compare truth2 truth1
 
 destructive :: IORef Int -> IO ()
 destructive io = modifyIORef io (+1)
+--require Data.Char
+properFormat hedgestr = toUpper (head hedgestr) : map toLower (tail hedgestr)
+properTruthString = map properFormat . splitOn " " 
 
 main = do
         io <- newIORef 3
         destructive io
         a <- readIORef io
         putStr $ show a ++ "\n"
+        putStrLn $ show $ resolution $ kbUnionGoal kb negatedGoal
+

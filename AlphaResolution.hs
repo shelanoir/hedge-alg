@@ -22,7 +22,7 @@ nilH :: (Ha hedge) => Lit hedge
 nilH = Lit "" MaxT
 
 smartClause :: (Ha hedge) => CNF (Lit hedge) -> Truth hedge -> Clause hedge
-smartClause (CNF lit) confi = (lit, confi)
+smartClause (CNF lits) confi = (lits, confi)
 
 confidence conf1 conf2 t1 t2 
         | t1 >< t2 = conf1 `andH` conf2 `andH` (notH (t1 `andH` t2)) `andH` (t1 `orH` t2)
@@ -41,7 +41,7 @@ resolvent (lits1, conf1) (lits2, conf2)
                         stringLit lit1 == stringLit lit2]
               step (lit1, lit2) = ((delete lit1 lits1) ++ (delete lit2 lits2),
                                    confidence conf1 conf2 (truthLit lit1) (truthLit lit2))     
-              result = map (\(a,b)->(sortCNF a, b)) . map step $ resPairs                
+              result = map (\(a,b)->(sortLits a, b)) . map step $ resPairs                
 
 
 resolution :: (Ha hedge) =>

@@ -6,6 +6,7 @@ module ProsLogic (
         lsCNF,
         smartCNF,
         sortCNF,
+        sortLits,
         module HedgeTruth,
         module HedgeClass,
         module Data.List
@@ -34,10 +35,11 @@ instance Show a => Show (CNF a) where
 
 lsCNF (CNF a) = a
 
-smartCNF a = CNF (sortCNF a)
--- CNF lists need to be sorted for ease of comparison
-sortCNF :: (Ha hedge) => [Lit hedge] -> [Lit hedge] 
-sortCNF = sortBy (\(Lit string1 t1) (Lit string2 t2) ->
+smartCNF a = CNF (sortLits a)
+sortCNF (CNF a) = CNF (sortLits a)
+-- Lists of Lits need to be sorted for ease of comparison
+sortLits :: (Ha hedge) => [Lit hedge] -> [Lit hedge] 
+sortLits = sortBy (\(Lit string1 t1) (Lit string2 t2) ->
                         case () of  
                             _   | string1 == string2 -> compare t1 t2
                                 | otherwise -> compare string1 string2)
