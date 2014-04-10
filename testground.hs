@@ -2,10 +2,13 @@ import ProsLogic
 import Ahedge
 import AlphaResolution
 import Data.IORef
-import Control.Monad
+
 import Data.List.Split
 import Data.Char
 
+import Control.Concurrent
+import Control.Monad
+import SelfRestart (selfRestart, forkSelfRestartExePollWithAction)
 ----------------------------------------------------
 --- TODO:
 --- tracing/explaining feature
@@ -55,4 +58,9 @@ main = do
         a <- readIORef io
         putStr $ show a ++ "\n"
         putStrLn $ show $ resolution $ kbUnionGoal kb negatedGoal
+        putStrLn "Enter something, anything!"
+        str <- getLine
+        putStrLn $ "You entered: " ++ str
+        putStrLn "Commencing restart..."
+        selfRestart
 
