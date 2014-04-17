@@ -7,6 +7,7 @@ module ProsLogic (
         smartCNF,
         sortCNF,
         sortLits,
+        negateLit,
         module HedgeTruth,
         module HedgeClass,
         module Data.List
@@ -28,13 +29,13 @@ instance Show hedge => Show (Lit hedge) where
 truthLit (Lit string truth) = truth 
 stringLit (Lit string truth) = string
 
-data CNF a = CNF [a]
+data CNF a = CNF [a] 
 instance Show a => Show (CNF a) where
         show (CNF [x]) = show x ++ "\n"
         show (CNF (x:xs)) = show x ++  " OR " ++ (show (CNF xs)) 
 
 lsCNF (CNF a) = a
-
+negateLit (Lit str truth) = Lit str (notH truth)
 smartCNF a = CNF (sortLits a)
 sortCNF (CNF a) = CNF (sortLits a)
 -- Lists of Lits need to be sorted for ease of comparison
