@@ -28,6 +28,8 @@ instance (Show h) => Show (Truth h) where
         show MinT = "MinT"
 
 isHTrue (Tru h) = True
+isHTrue MaxT = True
+isHTrue MinT = False
 isHTrue (Fals h) = False
 isHFalse = not . isHTrue
 
@@ -39,11 +41,19 @@ orH = max
 
 notH :: (Ha h) => Truth h -> Truth h
 notH (Tru h) = Fals h
+notH MaxT = MinT
+notH MinT = MaxT
 notH (Fals h) = Tru h
 
 (><) :: (Ha h) => Truth h -> Truth h -> Bool
 (Tru h) >< (Fals k) = True
 (Fals h) >< (Tru k) = True
+MaxT >< MinT = True
+MinT >< MaxT = True
+MaxT >< (Fals k) = True
+(Fals k) >< MaxT = True
+MinT >< (Tru k) = True
+(Tru k) >< MinT = True
 _ >< _ = False
 
 
