@@ -5,7 +5,7 @@ module AlphaResolution (
         module Data.List,
         smartClause,
         confidence,
-        --resolvent',--resolvent :: (Ha hedge) => ([Lit hedge], Truth hedge) -> ([Lit hedge], Truth hedge) -> Maybe [([Lit hedge], Truth hedge)]
+        resolvent',--resolvent :: (Ha hedge) => ([Lit hedge], Truth hedge) -> ([Lit hedge], Truth hedge) -> Maybe [([Lit hedge], Truth hedge)]
         resolution,
 --        resolution',
         nilH,
@@ -75,7 +75,7 @@ resolution' allClauses allGen resolved
                       | otherwise = Nothing
 
               resolvent (lits1, conf1) (lits2, conf2) 
---                      | trace ("\n\n\n"++show (lits1, conf1) ++"\n" ++ show (lits2, conf2) ++"\n"++ show resolved) False = undefined 
+--                      | trace ("\n\n\n" ++ (show $ length resolved)) False = undefined 
                       | null result = Nothing
                       | otherwise = Just result
                       where resPairs
@@ -86,13 +86,17 @@ resolution' allClauses allGen resolved
                             result = filter (not . generated) $ 
                                         map (\(a,b)->let (ls2,conf) = (nub . sortLits $ a, b)
                                                          grpByLit = groupBy (\(Lit str1 truth1) (Lit str2 truth2)
-                                                                                -> str1 == str2 && not (truth1 >< truth2)) ls2
+                                                                                -> str1 == str2) ls2
                                                                        
-                                                         lsfin = ($grpByLit) $ map $ maximumBy (\(Lit str1 truth1) (Lit str2 truth2)
-                                                                        -> case (isHTrue truth1) of
-                                                                                True -> compare truth1 truth2
-                                                                                False -> compare (notH truth1) (notH truth2))
-                                                        in (sortLits lsfin,conf)) . map step $ resPairs
+                                                         lsfinmax = ($grpByLit) $ map $ maximumBy 
+                                                          (\(Lit str1 truth1) (Lit str2 truth2)
+                                                                        -> compare truth1 truth2)
+                                                         lsfinmin =  ($grpByLit) $ map $ minimumBy 
+                                                          (\(Lit str1 truth1) (Lit str2 truth2)
+                                                                        -> compare truth1 truth2)
+                                                         lsfin = sortLits . nub $ (lsfinmax ++ lsfinmin)          
+              
+                                                        in (lsfin,conf)) . map step $ resPairs
                             generated x = x `elem` allGen
 
 --sortListofclause ls = sortBy (\(l1,c1) (l2,c2) -> compare c1 c2) ls

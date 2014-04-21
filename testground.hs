@@ -61,6 +61,10 @@ cnf4 = smartCNF [litB7]
 cnf5 = smartCNF [litC8] -- negated goal
 cnf6 = smartCNF [litC9]
 cnf7 = smartCNF [litC8,litC9,litB10]
+clause::Clause Hedge
+clause = ([litC8, litC5, litC3, Lit "Russia's intervention is justified" $ Tru [Very, Possibly, More]
+          , Lit "Russia's intervention is justified" $ Fals [Very, More]
+          , Lit "Russia's intervention is justified" $ Fals [Possibly, More], litA1, litB2, litB4, litB7, litB10], MaxT)
 --------------------------------
 kb = [cnf1, cnf2, cnf3, cnf4]
 goal = cnf6
@@ -333,3 +337,16 @@ test1 = do
         putStrLn "Commencing restart..."
         selfRestart
 
+optimize :: (Ha hedge) => Clause hedge -> Clause hedge
+optimize = (\(a,b)->let (ls2,conf) = (nub . sortLits $ a, b)
+                        grpByLit = groupBy (\(Lit str1 truth1) (Lit str2 truth2)
+                         -> str1 == str2) ls2 
+                        lsfinmax = ($grpByLit) $ map $ maximumBy 
+                          (\(Lit str1 truth1) (Lit str2 truth2)
+                                        -> compare truth1 truth2)
+                        lsfinmin =  ($grpByLit) $ map $ minimumBy 
+                          (\(Lit str1 truth1) (Lit str2 truth2)
+                                        -> compare truth1 truth2)
+                        lsfin = nub (lsfinmax ++ lsfinmin)          
+
+                      in (sortLits lsfin,conf)) 
