@@ -74,8 +74,8 @@ resolution' allClauses {-allGen-} resolved sympair
                                         clause2 <- allClauses,
                                         --(not $ (clause1,clause2) `elem` resolved) 
                                         -- && (not $ (clause2,clause1) `elem` resolved),
-                                        let res = trace("resolved" ++ show clause1++" (r$) "++ show clause2 ++ "\n")
-                                              $ resolvent clause1 clause2
+                                        let res = --trace("resolved" ++ show clause1++" (r$) "++ show clause2 ++ "\n")
+                                               resolvent clause1 clause2
                                         ]
               imm = [a | (Just a,clause1,clause2) <- als]
               nextResolved = nub $ [((nub . sortLits $ lits1, conf1),(nub . sortLits $ lits2, conf2))| 
