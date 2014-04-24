@@ -8,11 +8,10 @@ where
 import Language.Haskell.TH
 import System.Console.Readline
 import System.Environment
-readline' = do maybesmt <- readline ">>= "        
-               case maybesmt of
-                Nothing -> return ""
-                Just x -> addHistory x >> return x   
-
+import Database.HDBC
+import Database.HDBC.Sqlite3
+import Triv
+import Control.Monad
 -- Ctx: ClassP Name [Type]
 -- Type: ConT Name(for type constructor)
 -- <Ha Hedge> = AppT (ConT $ mkName "HA") (ConT $ mkName "Hedge")
@@ -59,21 +58,40 @@ hedgeDef cons pos neg rel = [DataD [] (mkName "Hedge") []
 
 mm::IO [Dec]
 cli_gen dbname = do
-                                {-putStr "Enter type: \n"
-                                typ <- readline'
-                                putStrLn "Enter data constructors"
-                                str <- loop [] " "
-                                let strr = words str
-                                dataDef' typ strr-}
+                                let querycons = "select hedge \
+                                        \from hedges join posl on hedges.hid = posl.hid \
+                                        \union select hedge \
+                                        \from hedges join negl on hedges.hid = negl.hid"
+                                conn <- connectSqlite3 dbname
+                                consQ <- quickQuery' conn querycons []
+                                let cons = map head $ fromQuery consQ
+                                print cons           
                                  
-                                let cons = ["Possibly", "Very", "More", "Less"]
+                                let queryposLs = "select hedge \
+                                        \from hedges join posl on hedges.hid = posl.hid "
+                                posQ <- quickQuery' conn queryposLs []
+                                let posLs = map head $ fromQuery posQ 
+                                let querynegLs = "select hedge \
+                                        \from hedges join negl on hedges.hid = negl.hid "
+                                negQ <- quickQuery' conn querynegLs []
+                                let negLs = map head $ fromQuery negQ
+
+                                let idsposRel = "select hid1, hid2 from posrel"
+                                idQ <- quickQuery' conn idsposRel []
+                                posrelQ <- forM idQ (quickQuery' conn 
+                                         "select h1.hedge,h2.hedge from hedges h1, hedges h2 \
+                                          \where h1.hid = ? AND h2.hid = ?")
+--                                print posrelQ
+                                let posRel = map head $ map fromQuery posrelQ
+                                print posRel
+                                {-let cons = ["Possibly", "Very", "More", "Less"]
                                     posLs = ["Very", "More"]
                                     negLs = ["Less","Possibly"]
                                     posRel = [["Very","More"],
                                               ["Very","Less"],
                                               ["More","Very"],
                                               ["Very","Very"],
-                                              ["More","More"]]                                   
+                                              ["More","More"]]-}                                   
                                 return (hedgeDef cons posLs negLs posRel)
         where loop acc latest = if (latest=="") then return (acc)
                                   else do str2 <- readline'
@@ -90,10 +108,10 @@ mm = do
         --print trueArgs
         case trueArgs of
                 ["--cli", dbname] -> do putStrLn "CLI"
-                                        cli_gen dbname
+                                        cli_gen "../test.db"
                 ("--gui":_)       -> do putStrLn "GUI"
-                                        cli_gen " "
-                _                 -> cli_gen " "       
+                                        cli_gen "../test.db"
+                _                 -> cli_gen "../test.db"       
 q = runIO mm
 
 
@@ -111,3 +129,9 @@ dataDef name cons = {-return-} [DataD [] (mkName name) []
 dataDef' :: String -> [String] -> IO {-Q-} [Dec]
 dataDef' a b = return (dataDef a b)                
 
+                                {-putStr "Enter type: \n"
+                                typ <- readline'
+                                putStrLn "Enter data constructors"
+                                str <- loop [] " "
+                                let strr = words str
+                                dataDef' typ strr-}

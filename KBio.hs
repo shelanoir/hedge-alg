@@ -1,6 +1,8 @@
 module KBio 
 where
-
+import ProsLogic
+import Ahedge
+import AlphaResolution
 import Util
 
 ------------------------

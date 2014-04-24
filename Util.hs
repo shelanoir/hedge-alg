@@ -1,8 +1,8 @@
 module Util (
 module Util,
-module ProsLogic,
-module Ahedge,
-module AlphaResolution,
+--module ProsLogic,
+--module Ahedge,
+--module AlphaResolution,
 
 module Data.IORef,
 module Data.List.Split,
@@ -16,7 +16,8 @@ module System.Console.Readline,
 
 module Control.Concurrent,
 module Control.Monad,
-module SelfRestart
+module SelfRestart,
+module Triv
 ) 
 where
 import ProsLogic
@@ -35,7 +36,7 @@ import System.Console.Readline
 
 import Control.Concurrent
 import Control.Monad
-
+import Triv
 import SelfRestart (selfRestart, forkSelfRestartExePollWithAction, exitImmediately, ExitCode(..))
 
 okTruthStr str = case (hedges,seed) of 
@@ -63,21 +64,6 @@ printLits xs = do
                 let ys = toClause xs
                 printClauses ys                
 
---require Data.Char
-properFormat [] = []
-properFormat hedgestr = toUpper (head hedgestr) : map toLower (tail hedgestr)
-
-properTruthString [] = []
-properTruthString (x:xs) = map properFormat . splitOn " " $ (x:xs)
-
---convert SQL query result to haskell String
-fromQuery :: [[SqlValue]] -> [[String]]
-fromQuery = map (map (fromSql :: SqlValue->String)) 
-
-readline' = do maybesmt <- readline ">>= "        
-               case maybesmt of
-                Nothing -> return ""
-                Just x -> addHistory x >> return x   
 
         
 
