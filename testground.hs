@@ -59,6 +59,27 @@ destructive io = modifyIORef io (+1)
 printPosH conn = do
         q <- quickQuery' conn "SELECT posl.hid,hedge FROM hedges, posl WHERE posl.hid = hedges.hid" []
         print q
+removeH dbname hedge' = do
+        let hedge = properFormat hedge'
+        conn <- connectSqlite3 dbname
+        q <- run conn "DELETE FROM posl WHERE posl.hid =\
+                \ (SELECT hid FROM hedges WHERE hedges.hedge = ?) " [toSql hedge]
+        printPosH conn
+        q <- run conn "DELETE FROM negl WHERE negl.hid =\
+                \ (SELECT hid FROM hedges WHERE hedges.hedge = ?) " [toSql hedge]
+
+        q <- run conn "DELETE FROM posrel WHERE posrel.hid1 =\
+                \ (SELECT HID FROM hedges WHERE hedges.hedge = ?)" [toSql hedge]
+        q <- run conn "DELETE FROM posrel WHERE posrel.hid2 =\
+                \ (SELECT HID FROM hedges WHERE hedges.hedge = ?)" [toSql hedge]
+        {-q <- run conn "DELETE FROM posrel WHERE negrel.hid1 =\
+                \ (SELECT HID FROM hedges WHERE hedges.hedge = ?)" [toSql hedge]
+        q <- run conn "DELETE FROM posrel WHERE negrel.hid2 =\
+                \ (SELECT HID FROM hedges WHERE hedges.hedge = ?)" [toSql hedge]-}
+        printPosH conn
+        q <- run conn "DELETE FROM hedges WHERE hedges.hedge = ?)" [toSql hedgexs]
+        commit conn
+        disconnect conn
 
 removePosH dbname hedge' = do
         let hedge = properFormat hedge'
@@ -99,11 +120,19 @@ removeNegH dbname hedge' = do
 
 addPosH dbname hedge'= do
         conn <- connectSqlite3 dbname
+        --get posl and negl lists
+        qR <- quickQuery' conn "SELECT hedge FROM hedges, posl WHERE posl.hid = hedges.hid" []
+        let posL = map ((fromSql::SqlValue->String) . head) qR
+        print posL
+        qR <- quickQuery' conn "SELECT hedge FROM hedges, negl WHERE negl.hid = hedges.hid" []
+        let negL = map ((fromSql::SqlValue->String) . head) qR
+        print negL
+
         let hed = properFormat hedge' 
-        if (hed `elem` (map show (posLs::[Hedge]))) 
+        if (hed `elem` posL)) 
           then do putStrLn "Already in positive list"
                   disconnect conn
-          else if (hed `elem` (map show (negLs::[Hedge])))
+          else if (hed `elem` negL)
             then do putStrLn "Already in negative list"
                     putStrLn "Remove from negative list? [y/n]"
                     cmdR <- readline'
