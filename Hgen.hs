@@ -68,11 +68,11 @@ cli_gen dbname = do
                                 print cons           
                                  
                                 let queryposLs = "select hedge \
-                                        \from hedges join posl on hedges.hid = posl.hid "
+                                        \from hedges join posl on hedges.hid = posl.hid order by pred"
                                 posQ <- quickQuery' conn queryposLs []
                                 let posLs = map head $ fromQuery posQ 
                                 let querynegLs = "select hedge \
-                                        \from hedges join negl on hedges.hid = negl.hid "
+                                        \from hedges join negl on hedges.hid = negl.hid order by pred"
                                 negQ <- quickQuery' conn querynegLs []
                                 let negLs = map head $ fromQuery negQ
 
