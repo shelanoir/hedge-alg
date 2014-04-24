@@ -77,7 +77,7 @@ removeH dbname hedge' = do
         q <- run conn "DELETE FROM posrel WHERE negrel.hid2 =\
                 \ (SELECT HID FROM hedges WHERE hedges.hedge = ?)" [toSql hedge]-}
         printPosH conn
-        q <- run conn "DELETE FROM hedges WHERE hedges.hedge = ?)" [toSql hedgexs]
+        q <- run conn "DELETE FROM hedges WHERE hedges.hedge = ?)" [toSql hedge]
         commit conn
         disconnect conn
 
@@ -129,7 +129,7 @@ addPosH dbname hedge'= do
         print negL
 
         let hed = properFormat hedge' 
-        if (hed `elem` posL)) 
+        if (hed `elem` posL)
           then do putStrLn "Already in positive list"
                   disconnect conn
           else if (hed `elem` negL)
