@@ -17,19 +17,19 @@ import Data.List
 --Truth value:
 --Truth :: (Ha hedge) => hedge -> Truth hedge -> Truth hedge
 --Truth hedge <= Eq, Ord, Show, bounded by MaxT and MinT
-data Truth hedge = Tru [hedge] | Fals [hedge] | MaxT | MinT deriving (Eq, Read)
+data Truth hedge = Tru [hedge] | Fals [hedge] | Maxt | Mint deriving (Eq, Read)
 -- Show Truth h        
 instance (Show h) => Show (Truth h) where        
         show (Tru []) = "True"
         show (Fals []) = "False"
         show (Tru (x:xs)) = show x ++ " " ++ show (Tru xs)
         show (Fals (x:xs)) = show x ++ " " ++ show (Fals xs)
-        show MaxT = "MaxT"
-        show MinT = "MinT"
+        show Maxt = "Maxt"
+        show Mint = "Mint"
 
 isHTrue (Tru h) = True
-isHTrue MaxT = True
-isHTrue MinT = False
+isHTrue Maxt = True
+isHTrue Mint = False
 isHTrue (Fals h) = False
 isHFalse = not . isHTrue
 
@@ -41,19 +41,19 @@ orH = max
 
 notH :: (Ha h) => Truth h -> Truth h
 notH (Tru h) = Fals h
-notH MaxT = MinT
-notH MinT = MaxT
+notH Maxt = Mint
+notH Mint = Maxt
 notH (Fals h) = Tru h
 
 (><) :: (Ha h) => Truth h -> Truth h -> Bool
 (Tru h) >< (Fals k) = True
 (Fals h) >< (Tru k) = True
-MaxT >< MinT = True
-MinT >< MaxT = True
-MaxT >< (Fals k) = True
-(Fals k) >< MaxT = True
-MinT >< (Tru k) = True
-(Tru k) >< MinT = True
+Maxt >< Mint = True
+Mint >< Maxt = True
+Maxt >< (Fals k) = True
+(Fals k) >< Maxt = True
+Mint >< (Tru k) = True
+(Tru k) >< Mint = True
 _ >< _ = False
 
 
@@ -61,10 +61,10 @@ _ >< _ = False
 -- Here comes the dragon...
 instance Ha h => Ord (Truth h) where
        --basic cases: 
-       compare MaxT t | t /= MaxT = GT
-       compare MinT t | t /= MinT = LT
-       compare t MinT | t /= MinT = GT
-       compare t MaxT | t /= MaxT = LT
+       compare Maxt t | t /= Maxt = GT
+       compare Mint t | t /= Mint = LT
+       compare t Mint | t /= Mint = GT
+       compare t Maxt | t /= Maxt = LT
        --cover 0-0 case
        compare (Tru _) (Fals _) = GT
        compare (Fals _) (Tru _) = LT

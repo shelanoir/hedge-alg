@@ -9,6 +9,7 @@ module AlphaResolution (
         resolvent',--resolvent :: (Ha hedge) => ([Lit hedge], Truth hedge) -> ([Lit hedge], Truth hedge) -> Maybe [([Lit hedge], Truth hedge)]
         resolution,
         resolution',
+        resolution'',
         nilH,
         rmTau,
         Debug.Trace.trace,
@@ -24,7 +25,7 @@ import Debug.Trace
 --
 type Clause hedge = ([Lit hedge], Truth hedge)
 nilH :: (Ha hedge) => Lit hedge
-nilH = Lit "" MaxT
+nilH = Lit "" Maxt
 
 smartClause :: (Ha hedge) => CNF (Lit hedge) -> Truth hedge -> Clause hedge
 smartClause (CNF lits) confi = (nub . sortLits $ lits, confi)
@@ -39,7 +40,7 @@ resolution :: (Ha hedge) =>
                 [Clause hedge] -> Maybe (Truth hedge)
 resolution xs = resolution' xs {-xs-} [] sympair
         where litsyms = nub [str|(lits, truth)<-xs, (Lit str tr) <- lits]
-              litsymstrue = map (\x-> ([Lit x MinT],MaxT)) litsyms
+              litsymstrue = map (\x-> ([Lit x Mint],Maxt)) litsyms
               sympair = map (\x@([Lit str tr], maxt)-> (str, (resolution'' (x:xs) []))) litsymstrue               
 
 --istrueLit :: (Ha hedge) => [Clause hedge] -> String -> Bool
@@ -217,5 +218,5 @@ resolution'' allClauses {-allGen-} resolved
                                                                         -> compare truth1 truth2)
                                                          lsfin = sortLits . nub $ (lsfinmax) -- ++ lsfinmin)          
                                                          
-                                                        in (lsfin,conf)) . map step $ resPairs
+                                                        in (lsfin,conf)) . rmTau . map step $ resPairs
 

@@ -36,8 +36,8 @@ getCNF db = do
                               truthval = case seed of
                                         "True" -> Tru hList
                                         "False" -> Fals hList
-                                        "MaxT" -> MaxT
-                                        _ -> MinT
+                                        "Maxt" -> Maxt
+                                        _ -> Mint
                 return $ smartCNF  $ map step rawLits
         disconnect conn
         return ret
@@ -49,20 +49,20 @@ getCNF db = do
 --process goal 
 -----------------        
 
-parseGoal:: String -> CNF (Lit Hedge)
+parseGoal:: String -> Lit Hedge
 parseGoal inp = case seed of
-                        "True" -> CNF [Lit lstring (Fals hedges)]
-                        "False" -> CNF [Lit lstring (Tru hedges)]
-                        "MaxT" -> CNF [Lit lstring MinT]
-                        _ -> CNF [Lit lstring MaxT]                
+                        "True" -> Lit lstring (Fals hedges)
+                        "False" -> Lit lstring (Tru hedges)
+                        "Maxt" -> Lit lstring Mint
+                        _ -> Lit lstring Maxt                
         where [lstring,truthstring] = case (map (reverse . dropWhile (\x->x==' ') . reverse . dropWhile (\x->x==' '))
                                           $ splitOn "::" inp) of
                                           [lstring, truthstring] -> [lstring,truthstring]
-                                          _ -> ["", "MaxT"]
+                                          _ -> ["", "Mint"]
               hstring = properTruthString truthstring                
               hedges = map read (init hstring) ::(Ha h) => [h]
               seed = last hstring                                                      
-parseGoals :: String -> [CNF (Lit Hedge)]              
+parseGoals :: String -> [Lit Hedge]              
 parseGoals inp =  map parseGoal ls
         where ls = join . map (splitOn ";") . join . map (splitOn ",") . splitOn "AND" $ inp                
 ---------------
@@ -82,7 +82,7 @@ parseInpClause inp = map stepLit ls
                                       (map (reverse . dropWhile (\x->x==' ') . 
                                       reverse . dropWhile (\x->x==' '))  $ splitOn "::" lit) of
                                             [lstring, truthstring] -> [lstring,truthstring]
-                                            _ -> ["", "MaxT"]
+                                            _ -> ["", "Mint"]
                     hstring =  properTruthString truthstring                
                     hedges = concat . intersperse " " . init $ hstring
                     seed = last hstring                                                      

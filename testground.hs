@@ -11,7 +11,7 @@ truth1 = Fals [Very,Very,Very,More]
 truth2 = Fals [Very,More,Possibly]
 res1 = compare truth1 truth2        
 res2 = compare truth2 truth1
-kbUnionGoal k g = zipWith smartClause (k ++ [g]) (repeat MaxT)
+kbUnionGoal k g = zipWith smartClause (k ++ [g]) (repeat Maxt)
 
 
 ---------testing data-----------
@@ -37,7 +37,7 @@ cnf7 = smartCNF [litC8,litC9,litB10]
 clause::Clause Hedge
 clause = ([litC8, litC5, litC3, Lit "Russia's intervention is justified" $ Tru [Very, Possibly, More]
           , Lit "Russia's intervention is justified" $ Fals [Very, More]
-          , Lit "Russia's intervention is justified" $ Fals [Possibly, More], litA1, litB2, litB4, litB7, litB10], MaxT)
+          , Lit "Russia's intervention is justified" $ Fals [Possibly, More], litA1, litB2, litB4, litB7, litB10], Maxt)
 --------------------------------
 kb = [cnf1, cnf2, cnf3, cnf4]
 goal = cnf6
@@ -49,35 +49,130 @@ destructive io = modifyIORef io (+1)
 
 
 -------------------------------------------------
-prove kb goal = resolution $ toClause kb ++ [smartClause goal MaxT]                                       
+prove kb goal = resolution $ toClause kb ++ [smartClause goal Maxt]                                       
      
 goalStr = "   Russia's intervention is justified   ::   Very True   " 
 
-main = test1
-test2 = do
+main = do
+        arg <- getArgs
+        case arg of
+            ["--cli",dbname] -> do putStrLn "Command line mode starting..."
+                                   cli dbname
+            ("--gui":_)      -> do putStrLn "GUI mode starting..."                                       
+            _                -> --putStrLn "usage: runhaskell <prog> [--cli|--gui] [dbname]"                     
+                                cli "../test.db"
+                
+cli dbname = do
         --(dbname:rest) <- getArgs
-        let dbname = "../cnf.db"
-        putStrLn "Please choose:"
-        command <- readline'
-        case command of
-                "prove" -> do
-                        putStrLn "What do you want me to prove for you?"
-                        putStrLn "-- Please enter it in the format\n\
-                        \ <statement> :: <truth-value> [AND|,|;] <statement> :: <truth-value> [AND|,|;]..."
-                        input <- return parseGoals `ap` readline'
-                        when ([Lit "" MaxT] `elem` (map lsCNF input)) $ putStrLn 
-                                "Seems like your proposition is ill-formatted"                                
-                        putStrLn $ show input
-                        knowledgebase <- getCNF dbname
-                        putStrLn $ show knowledgebase
-                        let res = map (\x-> prove knowledgebase x) input
-                        putStrLn $ show res
-                        return ()                                        
-                "print" -> do
-                        kb <- getCNF dbname
-                        putStrLn $ show kb                               
-                _ -> putStrLn "please enter something meaningful"
-        
+        --let dbname = "../test.db"
+        let menu = ["\n",
+                    "==============================================================",
+                    ">>= prove - prove the clause w.r.t. the knowledge base using\
+                    \\n    Alpha Resolution",
+                    ">>= print - print the knowledge base",
+                    ">>= check - check for the consistency of the knowledge base",
+                    ">>= add clause - add a new clause to the knowledge base",
+                    ">>= delete clause - remove a clause from the knowledge base",
+                    ">>= change clause - change a clause in the knowledge base",
+                    ">>= quit - exit program",
+                    ">>= menu - print this menu",
+                    "==============================================================",                    
+                    "\n"
+                    ]     
+        mapM_ putStrLn menu
+
+        forever $ do 
+          putStrLn "\n\nYour wish is my command: \n"
+          command <- readline'
+   
+          case command of
+                  "menu"  -> mapM_ putStrLn menu
+                  "quit"  -> exitImmediately ExitSuccess
+                  "check" -> do
+                          putStrLn "Checking ..."
+                          knowledgebase <- getCNF dbname
+                          let res = resolution'' (toClause knowledgebase) []
+                          print res
+                          case res of
+                                  Nothing -> putStrLn "KB is consistent"
+                                  Just x  -> putStrLn "[WARNING!!] KB is inconsistent"
+                  "prove" -> do
+                          putStrLn "What do you want me to prove for you?"
+                          putStrLn "-- Please enter it in the format\n\
+                          \ <statement> :: <truth-value> [AND|,|;] <statement> :: <truth-value> [AND|,|;]..."
+                          input <- return parseGoals `ap` readline'
+                          when ((Lit "" Maxt) `elem` input) $ putStrLn 
+                                  "Seems like your proposition is ill-formatted"                                
+                          print (CNF input)
+                          knowledgebase <- getCNF dbname
+                          putStrLn $ show knowledgebase
+                          let res = prove knowledgebase (CNF input)
+                          putStrLn $ show res
+                          return ()                                        
+                  "print" -> do
+                          kb <- getCNF dbname
+                          putStrLn $ show kb                               
+                          
+                  "add clause" -> do
+                          addClause dbname
+                  "delete clause" -> do
+                          conn <- connectSqlite3 dbname
+                          putStrLn "Enter the clause to be changed: "
+                          line <- readline'
+                          let inp = parseInpClause line
+                          let sqlval = map (map toSql) inp 
+                          print inp
+                          q <- forM sqlval (\x -> quickQuery' conn "SELECT cid FROM conjLits where conjLits.lid in \
+                                                  \ (SELECT lid FROM literal \
+                                                   \ WHERE lstring = ? AND hedges = ? AND truthval = ?)" $ x)
+                          let tq = map (map (fromSql . head)) q :: [[String]]
+                          print tq
+                          let cid = foldl1 intersect tq
+                          unless (null tq || (length tq /= length inp)) $ do
+                            if (cid /= [] && length cid == 1) then do
+                              lids <- quickQuery' conn "SELECT lid FROM conjLits where conjLits.cid = ?" $ map toSql cid    
+                              disconnect conn
+                              if (length lids == length inp) then
+                                       do deleteByCID (head . head $ tq :: String) dbname
+                                   else putStrLn "Nothing has been done: no exact clause matched"            
+                              else if (cid == []) then putStrLn "Nothing has been done: no clause matched"
+                                      else if (length cid /= 1) then do
+                                               putStrLn "Nothing has been done: multiple clause matched:"
+                                               print cid
+                                               putStrLn "Please try again with the Delete by id option"    
+                                              else putStrLn "Nothing has been done"
+                          disconnect conn                            
+                          when (null tq || (length tq /= length inp)) $ putStrLn "Nothing has been done"            
+                  "change clause" -> do
+                          conn <- connectSqlite3 dbname
+                          putStrLn "Enter the clause to be changed: "
+                          line <- readline'
+                          let inp = parseInpClause line
+                          let sqlval = map (map toSql) inp 
+                          print inp
+                          q <- forM sqlval (\x -> quickQuery' conn "SELECT cid FROM conjLits where conjLits.lid in \
+                                                  \ (SELECT lid FROM literal \
+                                                   \ WHERE lstring = ? AND hedges = ? AND truthval = ?)" $ x)
+                          let tq = map (map (fromSql . head)) q :: [[String]]
+                          print tq
+                          let cid = foldl1 intersect tq
+                          unless (null tq || (length tq /= length inp)) $ do
+                            if (cid /= [] && length cid == 1) then do
+                              lids <- quickQuery' conn "SELECT lid FROM conjLits where conjLits.cid = ?" $ map toSql cid    
+                              disconnect conn
+                              if (length lids == length inp) then
+                                       do changeByCID (head . head $ tq :: String) dbname
+                                   else putStrLn "Nothing has been done: no exact clause matched"            
+                              else if (cid == []) then putStrLn "Nothing has been done: no clause matched"
+                                      else if (length cid /= 1) then do
+                                               putStrLn "Nothing has been done: multiple clause matched:"
+                                               print cid
+                                               putStrLn "Please try again with the Change by id option"    
+                                              else putStrLn "Nothing has been done"
+                          disconnect conn                            
+                          when (null tq || (length tq /= length inp)) $ putStrLn "Nothing has been done"            
+                  _ -> putStrLn "please enter something meaningful"
+                        
 
 test1 = do
         io <- newIORef 3

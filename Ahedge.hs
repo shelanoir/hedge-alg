@@ -5,20 +5,26 @@
 -- Hedge is Enum in the sense
 -- that one can list it from
 -- Possibly to Less
+{-#LANGUAGE TemplateHaskell#-}
 module Ahedge (
         Hedge(..),
         module HedgeClass,
 ) 
 where
+import Hgen
 import HedgeClass
-
-data Hedge = Possibly | Very | More | Less deriving (Eq, Show, Enum, Read)
+import Language.Haskell.TH
+import Language.Haskell.TH.Syntax
+ 
+{-data Hedge = Possibly | Very | More | Less deriving (Eq, Show, Enum, Read)
 
 instance (Ha Hedge) where
         posLs = [Very, More]
         posRel = [(Very,More), (Very,Less), (More,Very), (Very,Very), (More, More)]
 
---Eq Hedge = default
+--Eq Hedge = default-}
+--Generating the type Hedge:
+q
 
 --Ord Hedge
 instance Ord Hedge where

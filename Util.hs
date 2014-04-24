@@ -36,9 +36,22 @@ import System.Console.Readline
 import Control.Concurrent
 import Control.Monad
 
-import SelfRestart (selfRestart, forkSelfRestartExePollWithAction)
+import SelfRestart (selfRestart, forkSelfRestartExePollWithAction, exitImmediately, ExitCode(..))
 
-toClause lits = zipWith smartClause lits $ repeat MaxT
+okTruthStr str = case (hedges,seed) of 
+                  (_,"Maxt") -> True
+                  (_,"Mint") -> True
+                  (x,y)      -> ok_hedges && ok_seed
+        where ls = map show (hedgeLs::[Hedge])
+              truths = ["True", "False", "Maxt", "Mint"]
+              truth_string = properTruthString str   
+              hedges = init truth_string
+              seed = last truth_string
+              ok_hedges = foldl step True hedges
+                where step bool h = bool && h `elem` ls
+              ok_seed = seed `elem` truths  
+
+toClause lits = zipWith smartClause lits $ repeat Maxt
 
 printClauses xs = do
                 let clauses = map (\(a,b) -> CNF a) xs
@@ -59,7 +72,7 @@ properTruthString (x:xs) = map properFormat . splitOn " " $ (x:xs)
 
 --convert SQL query result to haskell String
 fromQuery :: [[SqlValue]] -> [[String]]
-fromQuery res = map (map (fromSql :: SqlValue->String)) res
+fromQuery = map (map (fromSql :: SqlValue->String)) 
 
 readline' = do maybesmt <- readline ">>= "        
                case maybesmt of

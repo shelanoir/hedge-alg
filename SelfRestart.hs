@@ -6,12 +6,15 @@ module SelfRestart
     selfRestart
   , forkSelfRestartExePoll
   , forkSelfRestartExePollWithAction
+  , exitImmediately
+  , ExitCode(..)
   ) where
 
 import Control.Applicative
 import Control.Concurrent
 import Control.Monad
-import System.Posix.Process (executeFile)
+import System.Posix.Process (executeFile, exitImmediately)
+import GHC.IO.Exception (ExitCode(..))
 import System.Directory (getModificationTime)
 import System.Environment.Executable (getExecutablePath, getScriptPath, ScriptPath (..))
 import GHC.Environment (getFullArgs)
