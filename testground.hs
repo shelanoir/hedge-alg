@@ -57,7 +57,7 @@ destructive io = modifyIORef io (+1)
 --TODO: add a rel constraint
 
 printPosH conn = do
-        q <- quickQuery' conn "SELECT posl.hid,hedge FROM hedges, posl WHERE posl.hid = hedges.hid" []
+        q <- quickQuery' conn "SELECT posl.hid,hedge,pred FROM hedges, posl WHERE posl.hid = hedges.hid" []
         print q
 removeH dbname hedge' = do
         let hedge = properFormat hedge'
@@ -228,6 +228,20 @@ printHedges dbname = do
         putStrLn "Negative relations:"                   
         print (negRel::[(Hedge,Hedge)])
         disconnect conn
+
+changePosOrd hedge' newpred dbname = do
+        conn <- connectSqlite3 dbname
+        let hedge = properFormat hedge'        
+        printPosH conn
+        q <- quickQuery' conn "SELECT hid FROM hedges WHERE hedge = ?" [toSql hedge]
+        let hid = head . head $ q-- hedge's hid
+        q <- run conn "DELETE FROM posl WHERE hid = ? " [hid];                
+        putStrLn $ "rows removed: " ++ show q
+        q <- run conn "INSERT INTO posl(hid,pred) VALUES (?,?)" [hid, toSql newpred]
+        putStrLn $ "rows inserted: " ++ show q
+        printPosH conn
+        commit conn
+        disconnect conn
 -------------------------------------------------
 prove kb goal = resolution $ toClause kb ++ [smartClause goal Maxt]                                       
      
@@ -255,7 +269,7 @@ cli dbname = do
                     ">>= delete clause - remove a clause from the knowledge base",
                     ">>= change clause - change a clause in the knowledge base",
                     ">>= hedge structure - print the information about the under-\
-                     \\nlying hedge algebra",
+                     \\n    lying hedge algebra",
                     ">>= add positive - add a positive hedge",
                     ">>= add negative - add a negative hedge",
                     ">>= rm positive - remove a positive hedge",
