@@ -300,10 +300,14 @@ cli dbname = do
                           putStrLn $ show kb                               
                           
                   "add clause" -> do
-                          addClause dbname
+                          putStrLn "Enter a clause: "
+                          putStrLn "-- Please enter it in the format\n \
+                            \  <statement> :: <truth-value> [OR|,|;] <statement> :: <truth-value> [OR|,|;]..."
+                          line <- readline'
+                          addClause dbname line
                   "delete clause" -> do
                           conn <- connectSqlite3 dbname
-                          putStrLn "Enter the clause to be changed: "
+                          putStrLn "Enter the clause to be deleted: "
                           line <- readline'
                           let inp = parseInpClause line
                           let sqlval = map (map toSql) inp 

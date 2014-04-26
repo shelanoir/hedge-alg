@@ -149,11 +149,7 @@ deleteByCID id dbname = do
         commit conn
         disconnect conn 
 
-addClause dbname = do
-        putStrLn "Enter a clause: "
-        putStrLn "-- Please enter it in the format\n \
-                \  <statement> :: <truth-value> [OR|,|;] <statement> :: <truth-value> [OR|,|;]..."               
-        line <- readline'
+addClause dbname line = do
         let inp = parseInpClause line
         --putStrLn $ show inp
         ----Insert new literals if there were any
