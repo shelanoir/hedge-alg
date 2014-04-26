@@ -88,13 +88,13 @@ parseInpClause inp = map stepLit ls
                     hstring =  properTruthString truthstring                
                     hedges = concat . intersperse " " . init $ hstring
                     seed = last hstring                                                      
-changeByCID :: String -> String -> IO ()
-changeByCID id dbname = do
+changeByCID :: String -> String -> String -> IO ()
+changeByCID id line{-newclause-} dbname = do
         conn <- connectSqlite3 dbname
-        putStrLn "Enter new clause: "
+        {-putStrLn "Enter new clause: "
         putStrLn "-- Please enter it in the format\n \
                 \  <statement> :: <truth-value> [OR|,|;] <statement> :: <truth-value> [OR|,|;]..."               
-        line <- readline'
+        line <- readline'-}
         let inp = parseInpClause line
         let sqlval = map (map toSql) inp 
         q <- forM sqlval (\x -> quickQuery' conn "SELECT lstring, hedges, truthval FROM literal \
@@ -150,6 +150,10 @@ deleteByCID id dbname = do
         disconnect conn 
 
 addClause dbname line = do
+        {-putStrLn "Enter a clause: "
+        putStrLn "-- Please enter it in the format\n \
+            \  <statement> :: <truth-value> [OR|,|;] <statement> :: <truth-value> [OR|,|;]..."
+        line <- readline'-}
         let inp = parseInpClause line
         --putStrLn $ show inp
         ----Insert new literals if there were any

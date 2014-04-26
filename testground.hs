@@ -351,7 +351,11 @@ cli dbname = do
                               lids <- quickQuery' conn "SELECT lid FROM conjLits where conjLits.cid = ?" $ map toSql cid    
                               disconnect conn
                               if (length lids == length inp) then
-                                       do changeByCID (head . head $ tq :: String) dbname
+                                       do putStrLn "Enter new clause: "
+                                          putStrLn "-- Please enter it in the format\n \
+                                                \  <statement> :: <truth-value> [OR|,|;] <statement> :: <truth-value> [OR|,|;]..."               
+                                          newclause <- readline'
+                                          changeByCID (head . head $ tq :: String) newclause dbname
                                    else putStrLn "Nothing has been done: no exact clause matched"            
                               else if (cid == []) then putStrLn "Nothing has been done: no clause matched"
                                       else if (length cid /= 1) then do
