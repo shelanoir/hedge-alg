@@ -116,7 +116,7 @@ addlH table dbname hedge' pred yN= do
                                 print q
                                 commit conn
                                 disconnect conn
-                                selfRestart         
+--                                selfRestart         
                       _   -> do putStrLn "Nothing done"
                                 disconnect conn     
             else do q <- quickQuery' conn "SELECT hid FROM hedges WHERE hedge = ?" [toSql hed]
@@ -133,7 +133,7 @@ addlH table dbname hedge' pred yN= do
                     print q
                     commit conn
                     disconnect conn    
-                    selfRestart                    
+  --                  selfRestart                    
 
 addNegH = addlH "negl"
 addPosH = addlH "posl"                   
@@ -153,7 +153,7 @@ changeOrd table hedge' newpred dbname = do
         printlH table conn
         commit conn
         disconnect conn
-        selfRestart
+    --    selfRestart
 
 changePosOrd = changeOrd "posl"
 changeNegOrd = changeOrd "negl"
