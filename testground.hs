@@ -202,10 +202,10 @@ cli dbname = do
                                        yN <- readline'
                                        addPosH dbname hedge' pred yN        
                                        selfRestart
-                  "remove positive" -> do putStrLn "Please enter the name of the hedge:"
-                                          hedge' <- readline'
-                                          removePosH dbname hedge'         
-                                          selfRestart
+                  "rm positive" -> do putStrLn "Please enter the name of the hedge:"
+                                      hedge' <- readline'
+                                      removePosH dbname hedge'         
+                                      selfRestart
                   "add negative" -> do putStrLn "Please enter the name of the hedge:"
                                        hedge' <- readline'
                                        putStrLn "What would this hedge's precedence value be?"

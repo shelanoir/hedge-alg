@@ -1,4 +1,14 @@
-module Hio where
+module Hio(
+  printPosH,
+  printNegH,
+  removeH,
+  removePosH,
+  removeNegH,
+  addNegH,
+  addPosH,      
+  changePosOrd,
+  changeNegOrd,
+) where
 import SelfRestart
 import Triv
 import Database.HDBC
@@ -35,11 +45,11 @@ removeH dbname hedge' = do
                 \ (SELECT HID FROM hedges WHERE hedges.hedge = ?)" [toSql hedge]
         q <- run conn "DELETE FROM posrel WHERE posrel.hid2 =\
                 \ (SELECT HID FROM hedges WHERE hedges.hedge = ?)" [toSql hedge]
-        {-q <- run conn "DELETE FROM posrel WHERE negrel.hid1 =\
+        q <- run conn "DELETE FROM negrel WHERE negrel.hid1 =\
                 \ (SELECT HID FROM hedges WHERE hedges.hedge = ?)" [toSql hedge]
-        q <- run conn "DELETE FROM posrel WHERE negrel.hid2 =\
-                \ (SELECT HID FROM hedges WHERE hedges.hedge = ?)" [toSql hedge]-}
-        q <- run conn "DELETE FROM hedges WHERE hedges.hedge = ?)" [toSql hedge]
+        q <- run conn "DELETE FROM negrel WHERE negrel.hid2 =\
+                \ (SELECT HID FROM hedges WHERE hedges.hedge = ?)" [toSql hedge]
+        q <- run conn "DELETE FROM hedges WHERE hedges.hedge = ?" [toSql hedge]
         commit conn
         disconnect conn
 
@@ -55,10 +65,10 @@ removelH tabname dbname hedge' = do
                 \ (SELECT HID FROM hedges WHERE hedges.hedge = ?)" [toSql hedge]
         q <- run conn "DELETE FROM posrel WHERE posrel.hid2 =\
                 \ (SELECT HID FROM hedges WHERE hedges.hedge = ?)" [toSql hedge]
-        {-q <- run conn "DELETE FROM posrel WHERE negrel.hid1 =\
+        q <- run conn "DELETE FROM negrel WHERE negrel.hid1 =\
                 \ (SELECT HID FROM hedges WHERE hedges.hedge = ?)" [toSql hedge]
-        q <- run conn "DELETE FROM posrel WHERE negrel.hid2 =\
-                \ (SELECT HID FROM hedges WHERE hedges.hedge = ?)" [toSql hedge]-}
+        q <- run conn "DELETE FROM negrel WHERE negrel.hid2 =\
+                \ (SELECT HID FROM hedges WHERE hedges.hedge = ?)" [toSql hedge]
         commit conn
         disconnect conn
 removePosH = removelH "posl"
