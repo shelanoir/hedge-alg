@@ -53,39 +53,6 @@ destructive io = modifyIORef io (+1)
 
 
 --------------------------------------------------------------
-printHedges dbname = do
-        putStrLn ""
-        putStrLn "Every hedges in the database:"
-        conn <- connectSqlite3 dbname
-        qQ <- quickQuery' conn "SELECT hedge FROM hedges" []
-        let q = map (fromSql . head) qQ :: [String]
-        print q
-        putStrLn ""
-        putStrLn ""
-        putStrLn "Positive hedges:"
-        print (posLs::[Hedge])
-        putStrLn ""
-        printPosH conn        
-        putStrLn ""
-        putStrLn ""
-        putStrLn "Negative hedges:"
-        print (negLs::[Hedge])
-        putStrLn ""
-        printNegH conn        
-        putStrLn ""
-        putStrLn ""
-        putStrLn "Hedge actually in used:"
-        print (hedgeLs::[Hedge])
-        putStrLn ""
-        putStrLn ""
-        putStrLn "Positive relations:"                   
-        print (posRel::[(Hedge,Hedge)])
-        putStrLn ""
-        putStrLn ""
-        putStrLn "Negative relations:"                   
-        print (negRel::[(Hedge,Hedge)])
-        putStrLn ""
-        disconnect conn
 
 -------------------------------------------------
 prove kb goal = resolution $ toClause kb ++ [smartClause goal Maxt]                                       
