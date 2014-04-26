@@ -1,6 +1,7 @@
 import Util
 import Triv
 import KBio
+import Hio
 import ProsLogic
 import Ahedge
 import AlphaResolution
@@ -49,199 +50,43 @@ initialClauses = kbUnionGoal kb goal
 
 destructive :: IORef Int -> IO ()
 destructive io = modifyIORef io (+1)
--------------------------------------
---TODO: add a hedge to posl, to negl
---TODO: remove ...
---TODO: change precedence of posl/negl
---TODO: remove a relationship constraint
---TODO: add a rel constraint
-
-printPosH conn = do
-        q <- quickQuery' conn "SELECT posl.hid,hedge,pred FROM hedges, posl WHERE posl.hid = hedges.hid" []
-        print q
-removeH dbname hedge' = do
-        let hedge = properFormat hedge'
-        conn <- connectSqlite3 dbname
-        q <- run conn "DELETE FROM posl WHERE posl.hid =\
-                \ (SELECT hid FROM hedges WHERE hedges.hedge = ?) " [toSql hedge]
-        printPosH conn
-        q <- run conn "DELETE FROM negl WHERE negl.hid =\
-                \ (SELECT hid FROM hedges WHERE hedges.hedge = ?) " [toSql hedge]
-
-        q <- run conn "DELETE FROM posrel WHERE posrel.hid1 =\
-                \ (SELECT HID FROM hedges WHERE hedges.hedge = ?)" [toSql hedge]
-        q <- run conn "DELETE FROM posrel WHERE posrel.hid2 =\
-                \ (SELECT HID FROM hedges WHERE hedges.hedge = ?)" [toSql hedge]
-        {-q <- run conn "DELETE FROM posrel WHERE negrel.hid1 =\
-                \ (SELECT HID FROM hedges WHERE hedges.hedge = ?)" [toSql hedge]
-        q <- run conn "DELETE FROM posrel WHERE negrel.hid2 =\
-                \ (SELECT HID FROM hedges WHERE hedges.hedge = ?)" [toSql hedge]-}
-        printPosH conn
-        q <- run conn "DELETE FROM hedges WHERE hedges.hedge = ?)" [toSql hedge]
-        commit conn
-        disconnect conn
-
-removePosH dbname hedge' = do
-        let hedge = properFormat hedge'
-        conn <- connectSqlite3 dbname
-        q <- run conn "DELETE FROM posl WHERE posl.hid =\
-                \ (SELECT hid FROM hedges WHERE hedges.hedge = ?) " [toSql hedge]
-        print q        
-        printPosH conn
-        q <- run conn "DELETE FROM posrel WHERE posrel.hid1 =\
-                \ (SELECT HID FROM hedges WHERE hedges.hedge = ?)" [toSql hedge]
-        q <- run conn "DELETE FROM posrel WHERE posrel.hid2 =\
-                \ (SELECT HID FROM hedges WHERE hedges.hedge = ?)" [toSql hedge]
-        {-q <- run conn "DELETE FROM posrel WHERE negrel.hid1 =\
-                \ (SELECT HID FROM hedges WHERE hedges.hedge = ?)" [toSql hedge]
-        q <- run conn "DELETE FROM posrel WHERE negrel.hid2 =\
-                \ (SELECT HID FROM hedges WHERE hedges.hedge = ?)" [toSql hedge]-}
-
-        commit conn
-        disconnect conn
-
-removeNegH dbname hedge' = do
-        let hedge = properFormat hedge'
-        conn <- connectSqlite3 dbname
-        q <- run conn "DELETE FROM negl WHERE negl.hid =\
-                \ (SELECT hid FROM hedges WHERE hedges.hedge = ?) " [toSql hedge]
-        print q        
-        printPosH conn
-        q <- run conn "DELETE FROM posrel WHERE posrel.hid1 =\
-                \ (SELECT HID FROM hedges WHERE hedges.hedge = ?)" [toSql hedge]
-        q <- run conn "DELETE FROM posrel WHERE posrel.hid2 =\
-                \ (SELECT HID FROM hedges WHERE hedges.hedge = ?)" [toSql hedge]
-{-        q <- run conn "DELETE FROM posrel WHERE negrel.hid1 =\
-                \ (SELECT HID FROM hedges WHERE hedges.hedge = ?)" [toSql hedge]
-        q <- run conn "DELETE FROM posrel WHERE negrel.hid2 =\
-                \ (SELECT HID FROM hedges WHERE hedges.hedge = ?)" [toSql hedge]-}
-        commit conn
-        disconnect conn
-
-addPosH dbname hedge'= do
-        conn <- connectSqlite3 dbname
-        --get posl and negl lists
-        qR <- quickQuery' conn "SELECT hedge FROM hedges, posl WHERE posl.hid = hedges.hid" []
-        let posL = map ((fromSql::SqlValue->String) . head) qR
-        print posL
-        qR <- quickQuery' conn "SELECT hedge FROM hedges, negl WHERE negl.hid = hedges.hid" []
-        let negL = map ((fromSql::SqlValue->String) . head) qR
-        print negL
-
-        let hed = properFormat hedge' 
-        if (hed `elem` posL)
-          then do putStrLn "Already in positive list"
-                  disconnect conn
-          else if (hed `elem` negL)
-            then do putStrLn "Already in negative list"
-                    putStrLn "Remove from negative list? [y/n]"
-                    cmdR <- readline'
-                    let cmd = map toUpper cmdR
-                    case cmd of
-                      "Y" -> do disconnect conn
-                                removeNegH dbname hed
-                                conn <- connectSqlite3 dbname
-                                putStrLn "What would this hedge's precedence value be?"
-                                pred <- readline'
-                                q <- run conn "INSERT INTO posl(hid,pred)\ 
-                                               \ SELECT hid, ? FROM hedges WHERE hedge = ?" [toSql pred, toSql hed]
-                                printPosH conn                  
-                                print q
-                                commit conn
-                                disconnect conn
-                                selfRestart         
-                      _   -> do putStrLn "Nothing done"
-                                disconnect conn     
-            else do q <- quickQuery' conn "SELECT hid FROM hedges WHERE hedge = ?" [toSql hed]
-                    when (null q) $ 
-                      do putStrLn $ hed ++ " is not already in the database"
-                         putStrLn $ "...Adding " ++ hed     
-                         q <- run conn "INSERT INTO hedges(hedge) VALUES (?)" [toSql hed]                         
-                         print q
-                    putStrLn "What would this hedge's precedence value be?"
-                    pred <- readline'
-                    q <- run conn "INSERT INTO posl(hid,pred)\ 
-                                   \ SELECT hid, ? FROM hedges WHERE hedge = ?" [toSql pred, toSql hed]
-                    printPosH conn                  
-                    print q
-                    commit conn
-                    disconnect conn    
-                    selfRestart                    
 
 
-addNegH dbname hedge'= do
-        conn <- connectSqlite3 dbname
-        let hed = properFormat hedge' 
-        if (hed `elem` (map show (negLs::[Hedge]))) 
-          then do putStrLn "Already in negative list"
-                  disconnect conn
-          else if (hed `elem` (map show (negLs::[Hedge])))
-            then do putStrLn "Already in positive list"
-                    putStrLn "Remove from positive list? [y/n]"
-                    cmdR <- readline'
-                    let cmd = map toUpper cmdR
-                    case cmd of
-                      "Y" -> do disconnect conn
-                                removeNegH dbname hed
-                                conn <- connectSqlite3 dbname
-                                putStrLn "What would this hedge's precedence value be?"
-                                pred <- readline'
-                                q <- run conn "INSERT INTO negl(hid,pred)\ 
-                                               \ SELECT hid, ? FROM hedges WHERE hedge = ?" [toSql pred, toSql hed]
-                                printPosH conn                  
-                                print q
-                                commit conn
-                                disconnect conn
-                                selfRestart         
-                      _   -> do putStrLn "Nothing done"
-                                disconnect conn     
-            else do q <- quickQuery' conn "SELECT hid FROM hedges WHERE hedge = ?" [toSql hed]
-                    when (null q) $ 
-                      do putStrLn $ hed ++ " is not already in the database"
-                         putStrLn $ "...Adding " ++ hed     
-                         q <- run conn "INSERT INTO hedges(hedge) VALUES (?)" [toSql hed]                         
-                         print q
-                    putStrLn "What would this hedge's precedence value be?"
-                    pred <- readline'
-                    q <- run conn "INSERT INTO negl(hid,pred)\ 
-                                   \ SELECT hid, ? FROM hedges WHERE hedge = ?" [toSql pred, toSql hed]
-                    printPosH conn                  
-                    print q
-                    commit conn
-                    disconnect conn    
-                    selfRestart                    
-                   
+--------------------------------------------------------------
 printHedges dbname = do
+        putStrLn ""
         putStrLn "Every hedges in the database:"
         conn <- connectSqlite3 dbname
         qQ <- quickQuery' conn "SELECT hedge FROM hedges" []
         let q = map (fromSql . head) qQ :: [String]
         print q
+        putStrLn ""
+        putStrLn ""
         putStrLn "Positive hedges:"
         print (posLs::[Hedge])
+        putStrLn ""
+        printPosH conn        
+        putStrLn ""
+        putStrLn ""
         putStrLn "Negative hedges:"
         print (negLs::[Hedge])
+        putStrLn ""
+        printNegH conn        
+        putStrLn ""
+        putStrLn ""
         putStrLn "Hedge actually in used:"
         print (hedgeLs::[Hedge])
+        putStrLn ""
+        putStrLn ""
         putStrLn "Positive relations:"                   
         print (posRel::[(Hedge,Hedge)])
+        putStrLn ""
+        putStrLn ""
         putStrLn "Negative relations:"                   
         print (negRel::[(Hedge,Hedge)])
+        putStrLn ""
         disconnect conn
 
-changePosOrd hedge' newpred dbname = do
-        conn <- connectSqlite3 dbname
-        let hedge = properFormat hedge'        
-        printPosH conn
-        q <- quickQuery' conn "SELECT hid FROM hedges WHERE hedge = ?" [toSql hedge]
-        let hid = head . head $ q-- hedge's hid
-        q <- run conn "DELETE FROM posl WHERE hid = ? " [hid];                
-        putStrLn $ "rows removed: " ++ show q
-        q <- run conn "INSERT INTO posl(hid,pred) VALUES (?,?)" [hid, toSql newpred]
-        putStrLn $ "rows inserted: " ++ show q
-        printPosH conn
-        commit conn
-        disconnect conn
 -------------------------------------------------
 prove kb goal = resolution $ toClause kb ++ [smartClause goal Maxt]                                       
      
@@ -274,6 +119,9 @@ cli dbname = do
                     ">>= add negative - add a negative hedge",
                     ">>= rm positive - remove a positive hedge",
                     ">>= rm negative - remove a negative hedge",  
+                    ">>= rm hedge - completely remove a hedge",  
+                    ">>= mv positive - move a positive hedge to another precedence",
+                    ">>= mv negative- move a negative hedge to another precedence",
                     ">>= quit - exit program",
                     ">>= menu - print this menu",
                     "==============================================================",                    
@@ -381,17 +229,44 @@ cli dbname = do
                           when (null tq || (length tq /= length inp)) $ putStrLn "Nothing has been done"            
                   "add positive" -> do putStrLn "Please enter the name of the hedge:"
                                        hedge' <- readline'
-                                       addPosH dbname hedge'         
+                                       putStrLn "What would this hedge's precedence value be?"
+                                       pred <- readline'
+                                       putStrLn "Remove from negative list if the hedge were already there? [y/n]"
+                                       yN <- readline'
+                                       addPosH dbname hedge' pred yN        
+                                       selfRestart
                   "remove positive" -> do putStrLn "Please enter the name of the hedge:"
                                           hedge' <- readline'
                                           removePosH dbname hedge'         
+                                          selfRestart
                   "add negative" -> do putStrLn "Please enter the name of the hedge:"
                                        hedge' <- readline'
-                                       addNegH dbname hedge'         
-
-                  "remove negative" -> do putStrLn "Please enter the name of the hedge:"
-                                          hedge' <- readline'
-                                          removeNegH dbname hedge'         
+                                       putStrLn "What would this hedge's precedence value be?"
+                                       pred <- readline'
+                                       putStrLn "Remove from positive list if the hedge were already there? [y/n]"
+                                       yN <- readline'
+                                       addNegH dbname hedge' pred yN        
+                                       selfRestart
+                  "rm negative" -> do putStrLn "Please enter the name of the hedge:"
+                                      hedge' <- readline'
+                                      removeNegH dbname hedge'         
+                                      selfRestart
+                  "rm hedge" ->    do putStrLn "Please enter the name of the hedge:"
+                                      hedge' <- readline'
+                                      removeH dbname hedge'         
+                                      selfRestart
+                  "mv positive" -> do putStrLn "Please enter the name of the hedge:"
+                                      hedge' <- readline'
+                                      putStrLn "What would this hedge's precedence value be?"
+                                      pred <- readline'
+                                      changePosOrd hedge' pred dbname
+                                      selfRestart
+                  "mv negative" -> do putStrLn "Please enter the name of the hedge:"
+                                      hedge' <- readline'
+                                      putStrLn "What would this hedge's precedence value be?"
+                                      pred <- readline'
+                                      changeNegOrd hedge' pred dbname
+                                      selfRestart
                   "hedge structure" -> printHedges dbname                       
                   _ -> putStrLn "please enter something meaningful"
                         
