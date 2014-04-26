@@ -95,7 +95,7 @@ changeByCID id line{-newclause-} dbname = do
         putStrLn "-- Please enter it in the format\n \
                 \  <statement> :: <truth-value> [OR|,|;] <statement> :: <truth-value> [OR|,|;]..."               
         line <- readline'-}
-        let inp = parseInpClause line
+        let inp = parseInpClause line{-newclause-}
         let sqlval = map (map toSql) inp 
         q <- forM sqlval (\x -> quickQuery' conn "SELECT lstring, hedges, truthval FROM literal \
                                 \ WHERE lstring = ? AND hedges = ? AND truthval = ?" $ x)
