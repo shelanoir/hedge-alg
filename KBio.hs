@@ -5,6 +5,17 @@ import Ahedge
 import AlphaResolution
 import Util
 -----old _test-------------------------------------------
+--sid_to_hstring:: String->SqlValue->IO (Maybe [String])
+sid_to_hstring dbname sid = do
+        conn <- connectSqlite3 dbname 
+        let query = "with recursive sids as (select sid,hid,tail from hstring where hstring.sid = ?\
+                     \ UNION select hstring.sid,hstring.hid,hstring.tail from hstring, sids\
+                     \  where hstring.sid IS NOT NULL AND hstring.sid = sids.tail)\
+                     \ select hedge from sids JOIN hedges on sids.hid = hedges.hid;"
+        q <- quickQuery' conn query [sid]
+        disconnect conn
+        return $ map fromSql $ concat q :: IO [String]
+
 hStringtoHid:: String->[String]->IO (Maybe [SqlValue])
 hStringtoHid dbname hstring = do
         conn <- connectSqlite3 dbname
