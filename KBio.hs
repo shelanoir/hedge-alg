@@ -4,7 +4,57 @@ import ProsLogic
 import Ahedge
 import AlphaResolution
 import Util
+-----old _test-------------------------------------------
+hStringtoHid:: String->[String]->IO (Maybe [SqlValue])
+hStringtoHid dbname hstring = do
+        conn <- connectSqlite3 dbname
+        q <- forM (map toSql hstring) (\x->quickQuery' conn "SELECT hid FROM hedges WHERE hedge = ?" [x])
+        disconnect conn
+        case q of
+           _ | [] `elem` q -> return Nothing      
+             | otherwise ->  return $ Just (concat . concat $ q)
 
+find_sid conn ( [], acc, (x:xs)) = do
+        return ([], acc, (x:xs))
+find_sid conn ( (x:xs), acc, processed) = do        
+        sid <- quickQuery' conn "SELECT sid FROM hstring WHERE tail is ? AND hid = ?"
+                [acc, x]
+        if (null sid) then return ( (x:xs), acc, processed)        
+                else find_sid conn ( xs, head . head $ sid, x:processed)
+
+insert_if_not_exist_sid dbname hString = do
+        let hstring = properTruthString hString
+        hids <- (liftM $ fmap reverse) $ hStringtoHid dbname hstring                                
+        case hids of
+          Nothing -> return Nothing
+          (Just x)
+           -> do conn <- connectSqlite3 dbname 
+                 (remained, acc, processed) <- find_sid conn (x, SqlNull, [])
+                 disconnect conn
+                 case (remained,acc,processed) of
+                        ([], acc, processed) | processed == reverse x -> return $ Just acc
+                                             | otherwise -> return Nothing
+                        ((x:xs), acc, processed)
+                          -> do q <- foldM step (Just acc) remained
+                                case q of (Just SqlNull) -> return Nothing
+                                          _       -> return q 
+                                  where step sidd hid = 
+                                          case sidd of
+                                           (Just sid) ->
+                                              do conn <- connectSqlite3 dbname
+                                                 q <- run conn "INSERT INTO hstring(hid,tail) VALUES \
+                                                        \ (?,?)" [hid,sid]
+                                                 print q
+                                                 commit conn
+                                                 nextsidQ <- quickQuery' conn "SELECT sid FROM hstring \
+                                                              \ WHERE tail is ? AND hid = ?" 
+                                                              [sid,hid]
+                                                 disconnect conn             
+                                                 if (null nextsidQ) then 
+                                                      return Nothing
+                                                   else do let nextsid = head . head $ nextsidQ
+                                                           return (Just nextsid)     
+                                           Nothing -> return Nothing                        
 ------------------------
 --get all conj from db
 ------------------------
