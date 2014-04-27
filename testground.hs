@@ -135,15 +135,24 @@ cli dbname = do
                           line <- readline'
                           addClause dbname line
                   "delete clause" -> do
-                          conn <- connectSqlite3 dbname
                           putStrLn "Enter the clause to be deleted: "
                           line <- readline'
                           let inp = parseInpClause line
-                          let sqlval = map (map toSql) inp 
-                          print inp
+                          sqlval <- forM inp
+                                     (\[lstring, hedges, lseed]                                          
+                                          -> do (Just hids) <- hStringtoHid dbname (properTruthString hedges)
+                                                conn <- connectSqlite3 dbname
+                                                let string = toSql lstring
+                                                    seed = toSql lseed
+                                                    rhids = reverse hids
+                                                (_,sid,_) <- find_sid conn (rhids, SqlNull, [])
+                                                disconnect conn
+                                                return [string,sid,seed])                             
+                          print sqlval
+                          conn <- connectSqlite3 dbname
                           q <- forM sqlval (\x -> quickQuery' conn "SELECT cid FROM conjLits where conjLits.lid in \
                                                   \ (SELECT lid FROM literal \
-                                                   \ WHERE lstring = ? AND hedges = ? AND truthval = ?)" $ x)
+                                                   \ WHERE lstring = ? AND sid = ? AND truthval = ?)" $ x)
                           let tq = map (map (fromSql . head)) q :: [[String]]
                           print tq
                           let cid = foldl1 intersect tq
@@ -163,15 +172,24 @@ cli dbname = do
                           disconnect conn                            
                           when (null tq || (length tq /= length inp)) $ putStrLn "Nothing has been done"            
                   "change clause" -> do
-                          conn <- connectSqlite3 dbname
                           putStrLn "Enter the clause to be changed: "
                           line <- readline'
                           let inp = parseInpClause line
-                          let sqlval = map (map toSql) inp 
+                          sqlval <- forM inp
+                                     (\[lstring, hedges, lseed]                                          
+                                          -> do (Just hids) <- hStringtoHid dbname (properTruthString hedges)
+                                                conn <- connectSqlite3 dbname
+                                                let string = toSql lstring
+                                                    seed = toSql lseed
+                                                    rhids = reverse hids
+                                                (_,sid,_) <- find_sid conn (rhids, SqlNull, [])
+                                                disconnect conn
+                                                return [string,sid,seed])
                           print inp
+                          conn <- connectSqlite3 dbname
                           q <- forM sqlval (\x -> quickQuery' conn "SELECT cid FROM conjLits where conjLits.lid in \
                                                   \ (SELECT lid FROM literal \
-                                                   \ WHERE lstring = ? AND hedges = ? AND truthval = ?)" $ x)
+                                                   \ WHERE lstring = ? AND sid = ? AND truthval = ?)" $ x)
                           let tq = map (map (fromSql . head)) q :: [[String]]
                           print tq
                           let cid = foldl1 intersect tq

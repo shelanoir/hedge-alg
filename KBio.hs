@@ -21,6 +21,7 @@ hStringtoHid dbname hstring = do
         conn <- connectSqlite3 dbname
         q <- forM (map toSql hstring) (\x->quickQuery' conn "SELECT hid FROM hedges WHERE hedge = ?" [x])
         disconnect conn
+        print q
         case q of
            _ | [] `elem` q -> return Nothing      
              | otherwise ->  return $ Just (concat . concat $ q)
@@ -87,8 +88,8 @@ getCNF db = do
                 rawQ <- quickQuery' 
                         conn 
                         "SELECT lstring, truthval, sid\
-                        \FROM literal JOIN conjLits ON conjLits.lid = literal.lid \
-                        \WHERE conjLits.cid = ?" 
+                        \ FROM literal JOIN conjLits ON conjLits.lid = literal.lid\
+                        \ WHERE conjLits.cid = ?" 
                         [toSql x]
                 disconnect conn        
                 rawLits <- forM rawQ (\[string,seed,sid] -> do 
@@ -275,10 +276,10 @@ addClause dbname line = do
                 let lids' = concat lids
                 q <- forM lids' (\x -> run conn "INSERT INTO conjLits (cid,lid) VALUES (?,?)"
                                           $ cid :x)
-                q <- quickQuery' conn "SELECT lstring, hedges, truthval \
+                q <- quickQuery' conn "SELECT lstring, sid, truthval \
                         \FROM literal JOIN conjLits ON conjLits.lid = literal.lid \
                         \WHERE conjLits.cid = ?" [cid]
-                putStrLn $ show $ map (map toSql) q
+                print ( map (map fromSql) q :: [[String]])
                 commit conn
             else putStrLn "No new clause added"    
         disconnect conn
