@@ -2,13 +2,13 @@ import Database.HDBC
 import Database.HDBC.Sqlite3
 initSchema =
         ["PRAGMA recursive_triggers=0",
-         "CREATE TABLE hedges (hid Integer primary key, hedge Varchar(30) unique)",
-         "CREATE TABLE posl(hid Integer references hedges(hid), pred Integer, primary key (hid))",
-         "CREATE TABLE negl(hid Integer references hedges(hid), pred Integer, primary key (hid))",
-         "CREATE TABLE posrel (hid1 Integer references hedges(hid), hid2 Integer references hedges(hid), primary key (hid1,hid2))",
-         "CREATE TABLE negrel (hid1 Integer references hedges(hid), hid2 Integer references hedges(hid), primary key (hid1,hid2))",
+         "CREATE TABLE hedges (hid Integer primary key NOT NULL, hedge Varchar(30) unique)",
+         "CREATE TABLE posl(hid Integer references hedges(hid) NOT NULL, pred Integer, primary key (hid))",
+         "CREATE TABLE negl(hid Integer references hedges(hid) NOT NULL, pred Integer, primary key (hid))",
+         "CREATE TABLE posrel (hid1 Integer references hedges(hid) NOT NULL, hid2 Integer references hedges(hid) NOT NULL, primary key (hid1,hid2))",
+         "CREATE TABLE negrel (hid1 Integer references hedges(hid) NOT NULL, hid2 Integer references hedges(hid) NOT NULL, primary key (hid1,hid2))",
 
-         "CREATE TABLE hstring (sid Integer primary key, hid integer references hedges(hid), tail Integer references hstring(sid))", 
+         "CREATE TABLE hstring (sid Integer primary key, hid integer references hedges(hid) NOT NULL, tail Integer references hstring(sid))", 
          "CREATE TRIGGER posl_delete \
          \ AFTER DELETE ON posl \
          \ begin \
