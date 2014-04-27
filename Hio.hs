@@ -8,7 +8,12 @@ module Hio(
   addPosH,      
   changePosOrd,
   changeNegOrd,
-) where
+  addPosRel, 
+  addNegRel, 
+  removePosRel,
+  removeNegRel,
+  renameHedge,
+  ) where
 import SelfRestart
 import Triv
 import Database.HDBC
@@ -145,7 +150,9 @@ changeOrd table hedge' newpred dbname = do
         let hedge = properFormat hedge'        
         printlH table conn
         q <- quickQuery' conn "SELECT hid FROM hedges WHERE hedge = ?" [toSql hedge]
-        let hid = head . head $ q-- hedge's hid
+        let hid = case q of
+                    [] -> SqlNull
+                    _  ->  head . head $ q-- hedge's hid
         q <- run conn ("DELETE FROM " ++ table ++ " WHERE hid = ?") [hid];                
         putStrLn $ "rows removed: " ++ show q
         q <- run conn ("INSERT INTO " ++ table ++ "(hid,pred) VALUES (?,?)") [hid, toSql newpred]
@@ -157,4 +164,98 @@ changeOrd table hedge' newpred dbname = do
 
 changePosOrd = changeOrd "posl"
 changeNegOrd = changeOrd "negl"
+
+renameHedge dbname hedge' new' = do
+        conn <- connectSqlite3 dbname
+        let hedge = properFormat hedge'
+            new = properFormat new'    
+        q <- run conn "UPDATE hedges SET hedge = ? WHERE hedge = ?" [toSql new, toSql hedge]
+        print q
+        commit conn
+        disconnect conn
+
+addlRel table dbname hedge1' hedge2' = do
+        conn <- connectSqlite3 dbname
+        let hedge1 = properFormat hedge1'
+            hedge2 = properFormat hedge2'
+        putStrLn $ hedge1 ++" "++ hedge2    
+        putStrLn ""            
+        let thatT = case table of
+                      "posrel" -> "negrel"
+                      _        -> "posrel"
+            thisT = table                 
+        q <- quickQuery' conn "SELECT hid FROM hedges WHERE hedge = ?" [toSql hedge1]
+        let hid1 = case q of
+                    [] -> SqlNull
+                    _  ->  head . head $ q-- hedge's hid
+        print q
+        putStrLn ""            
+        q <- quickQuery' conn "SELECT hid FROM hedges WHERE hedge = ?" [toSql hedge2]
+        let hid2 = case q of
+                    [] -> SqlNull
+                    _  ->  head . head $ q-- hedge's hid
+        print q
+        putStrLn ""            
+        qQ <- run conn ("DELETE FROM "++thatT) []
+        qQ <- run conn ("INSERT OR IGNORE INTO "++thisT++"(hid1,hid2) VALUES(?, ?)") [hid1,hid2]
+        commit conn
+        qQ <- quickQuery' conn "SELECT hid FROM posl UNION SELECT hid FROM negl" []
+        let q = concat qQ
+        print q
+        putStrLn ""
+        qQ <- quickQuery' conn ("SELECT * FROM "++thisT) []  
+        print qQ
+        putStrLn ""
+        let negRel = [[h1,h2]| h1 <- q, h2 <- q, [h1,h2] `notElem` qQ]
+        q <- forM negRel $ run conn ("INSERT OR IGNORE INTO "++thatT++"(hid1,hid2) VALUES(?, ?)")
+        --print $ foldr1 (+) q
+        q <- quickQuery' conn ("SELECT * FROM "++ thatT) []
+        putStrLn ""
+        print q
+        commit conn
+        disconnect conn
+
+addPosRel = addlRel "posrel"        
+addNegRel = addlRel "negrel"        
+
+
+removePosRel = removelRel "posrel"        
+removeNegRel = removelRel "negrel"        
+
+removelRel table dbname hedge1' hedge2' = do
+        conn <- connectSqlite3 dbname
+        let hedge1 = properFormat hedge1'
+            hedge2 = properFormat hedge2'
+        let thatT = case table of
+                      "posrel" -> "negrel"
+                      _        -> "posrel"
+            thisT = table                 
+        q <- quickQuery' conn "SELECT hid FROM hedges WHERE hedge = ?" [toSql hedge1]        
+        let hid1 = case q of
+                    [] -> SqlNull
+                    _  ->  head . head $ q-- hedge's hid
+        q <- quickQuery' conn "SELECT hid FROM hedges WHERE hedge = ?" [toSql hedge2]
+        let hid2 = case q of
+                    [] -> SqlNull
+                    _  ->  head . head $ q-- hedge's hid
+        
+        qQ <- run conn ("DELETE FROM "++thatT) []
+        qQ <- run conn ("DELETE FROM "++thisT++" WHERE hid1=? AND hid2=?") [hid1,hid2]
+        
+        qQ <- quickQuery' conn "SELECT hid FROM posl UNION SELECT hid FROM negl" []
+        let q = concat qQ
+        print q
+        putStrLn ""
+        qQ <- quickQuery' conn ("SELECT * FROM "++thisT) []  
+        print qQ
+        putStrLn ""
+        let negRel = [[h1,h2]| h1 <- q, h2 <- q, [h1,h2] `notElem` qQ]
+        q <- forM negRel $ run conn ("INSERT OR IGNORE INTO "++thatT++"(hid1,hid2) VALUES(?, ?)")
+        --print $ foldr1 (+) q
+        q <- quickQuery' conn ("SELECT * FROM "++ thatT) []
+        putStrLn ""
+        print q
+        commit conn
+        disconnect conn
+
 
