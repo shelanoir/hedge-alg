@@ -84,12 +84,19 @@ getCNF db = do
         cids <- getCid db
         conn <- connectSqlite3 db
         ret<-forM cids $ \x -> do 
-                rawLits <-liftM fromQuery $ quickQuery' 
+                rawQ <- quickQuery' 
                         conn 
-                        "SELECT lstring, truthval, hedges \
+                        "SELECT lstring, truthval, sid\
                         \FROM literal JOIN conjLits ON conjLits.lid = literal.lid \
                         \WHERE conjLits.cid = ?" 
                         [toSql x]
+                disconnect conn        
+                rawLits <- forM rawQ (\[string,seed,sid] -> do 
+                                         qQ <- sid_to_hstring db sid
+                                         let q = concat $ intersperse " " qQ
+                                             lstring = (fromSql string) :: String
+                                             lseed = (fromSql seed) :: String
+                                         return [lstring,lseed,q])
                 let step [lstring, lseed, lhedges] =
                         Lit lstring $ truthval
                         where 
@@ -102,7 +109,6 @@ getCNF db = do
                                         "Maxt" -> Maxt
                                         _ -> Mint
                 return $ smartCNF  $ map step rawLits
-        disconnect conn
         return ret
 -----------------
 --end get conj
