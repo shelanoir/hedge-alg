@@ -66,7 +66,7 @@ main = do
                                    cli dbname
             ("--gui":_)      -> do putStrLn "GUI mode starting..."                                       
             _                -> --putStrLn "usage: runhaskell <prog> [--cli|--gui] [dbname]"                     
-                                cli "../s-test.db"
+                                cli "../test.db"
                 
 cli dbname = do
         --(dbname:rest) <- getArgs
@@ -162,6 +162,7 @@ cli dbname = do
                                                 let string = toSql lstring
                                                     seed = toSql lseed
                                                     rhids = reverse hids
+                                                putStrLn $ "hids: " ++ (show hids) ++ "\n"    
                                                 (_,sid,_) <- find_sid conn (rhids, SqlNull, [])
                                                 disconnect conn
                                                 return [string,sid,seed])                             

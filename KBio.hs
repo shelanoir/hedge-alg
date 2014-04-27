@@ -42,6 +42,7 @@ insert_if_not_exist_sid dbname hString = do
           (Just x)
            -> do conn <- connectSqlite3 dbname 
                  (remained, acc, processed) <- find_sid conn (x, SqlNull, [])
+                 print $ (remained, acc, processed)
                  disconnect conn
                  case (remained,acc,processed) of
                         ([], acc, processed) | processed == reverse x -> return $ Just acc
@@ -83,20 +84,21 @@ getCid db = do
 getCNF :: String -> IO [CNF (Lit Hedge)]
 getCNF db = do
         cids <- getCid db
-        conn <- connectSqlite3 db
         ret<-forM cids $ \x -> do 
+                conn <- connectSqlite3 db
                 rawQ <- quickQuery' 
                         conn 
                         "SELECT lstring, truthval, sid\
                         \ FROM literal JOIN conjLits ON conjLits.lid = literal.lid\
                         \ WHERE conjLits.cid = ?" 
                         [toSql x]
-                disconnect conn        
+                disconnect conn                        
                 rawLits <- forM rawQ (\[string,seed,sid] -> do 
                                          qQ <- sid_to_hstring db sid
                                          let q = concat $ intersperse " " qQ
                                              lstring = (fromSql string) :: String
                                              lseed = (fromSql seed) :: String
+                                         putStrLn $ "hstring: " ++ (show sid)   
                                          return [lstring,lseed,q])
                 let step [lstring, lseed, lhedges] =
                         Lit lstring $ truthval
@@ -105,10 +107,10 @@ getCNF db = do
                               hedges = properTruthString lhedges  
                               hList = map (read :: String -> Hedge) hedges
                               truthval = case seed of
-                                        "True" -> Tru hList
-                                        "False" -> Fals hList
-                                        "Maxt" -> Maxt
-                                        _ -> Mint
+                                          "True" -> Tru hList
+                                          "False" -> Fals hList
+                                          "Maxt" -> Maxt
+                                          _ -> Mint
                 return $ smartCNF  $ map step rawLits
         return ret
 -----------------
@@ -235,6 +237,8 @@ addClause dbname line = do
                                 let string = toSql lstring
                                     seed = toSql lseed
                                 return [string,sid,seed])                              
+        print sqlval               
+        putStrLn ""
         conn <- connectSqlite3 dbname
         q <- forM sqlval (\x -> quickQuery' conn "SELECT lstring, sid , truthval FROM literal \
                                 \ WHERE lstring = ? AND sid = ? AND truthval = ?" $ x)
