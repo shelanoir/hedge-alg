@@ -17,7 +17,8 @@ module System.Console.Readline,
 module Control.Concurrent,
 module Control.Monad,
 module SelfRestart,
-module Triv
+module Triv,
+module Hio,
 ) 
 where
 import ProsLogic
