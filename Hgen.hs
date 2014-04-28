@@ -12,6 +12,9 @@ import Database.HDBC
 import Database.HDBC.Sqlite3
 import Triv
 import Control.Monad
+import Control.Exception
+import SelfRestart(ExitCode(..),selfRestart,exitImmediately)
+import Data.Char(toLower)
 -- Ctx: ClassP Name [Type]
 -- Type: ConT Name(for type constructor)
 -- <Ha Hedge> = AppT (ConT $ mkName "HA") (ConT $ mkName "Hedge")
@@ -102,16 +105,31 @@ cli_gen dbname = do
 mm = do
         args <- getArgs
         let trueArgs = args
+        let dummyDec = [DataD [] (mkName "") [] [] []]
         --let [_, trueargs] = words $ args !! (length args - 2)
         --let trueArgs = read trueargs :: [String]
         --putStrLn "Arguments are: "
-        --print trueArgs
+        --print trueArgs        
         case trueArgs of
-                ["--cli", dbname] -> do putStrLn "CLI"
-                                        cli_gen "../test.db"
+                ("--cli":dbname:_) -> do putStrLn "CLI"
+                                         cli_gen dbname
                 ("--gui":_)       -> do putStrLn "GUI"
                                         cli_gen "../test.db"
                 _                 -> cli_gen "../test.db"       
+         `catch` ((\e ->do print e
+                           putStrLn "Exception raised"
+                           putStrLn "back to main menu or quit? [m/q]"
+                           ansM <- readline'
+                           let ans = map toLower ansM
+                           case ans of
+                             "m" -> do selfRestart
+                                       return dummyDec    
+                             "q" -> do exitImmediately $ ExitFailure (-1)
+                                       return dummyDec    
+                             _   -> do putStrLn "default: exit program"
+                                       exitImmediately $ ExitFailure (-1)
+                                       return dummyDec
+                     ):: SomeException->IO [Dec])
 q = runIO mm
 
 

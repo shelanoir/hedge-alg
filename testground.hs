@@ -5,6 +5,7 @@ import Hio
 import ProsLogic
 import Ahedge
 import AlphaResolution
+import Control.Exception
 ----------------------------------------------------
 --- TODO:
 --- tracing/explaining feature
@@ -61,13 +62,25 @@ goalStr = "   Russia's intervention is justified   ::   Very True   "
 
 main = do
         arg <- getArgs
-        case arg of
-            ["--cli",dbname] -> do putStrLn "Command line mode starting..."
-                                   cli dbname
-            ("--gui":_)      -> do putStrLn "GUI mode starting..."                                       
-            _                -> --putStrLn "usage: runhaskell <prog> [--cli|--gui] [dbname]"                     
-                                cli "../test.db"
-                
+        case arg of          
+          ("--gui":dbname:_) -> do putStrLn "GUI mode starting..."
+                    --               cli dbname
+          ("--cli":dbname:_)-> do 
+                                putStrLn "CLI mode starting..."                                     
+                                cli "../test.db" `catch` 
+                                   ((\e ->do print e
+                                             putStrLn "Exception raised"
+                                             putStrLn "back to main menu or quit? [m/q]"
+                                             ansM <- readline'
+                                             let ans = map toLower ansM
+                                             case ans of
+                                               "m" -> selfRestart
+                                               "q" -> exitImmediately $ ExitFailure (-1)
+                                               _   -> do putStrLn "default: exit program"
+                                                         exitImmediately $ ExitFailure (-1)
+                                     ):: SomeException->IO ())
+          _ -> do putStrLn "Usage: runghc Main.hs <intefacing mode> <dbname>"
+                  exitImmediately $ ExitFailure (-1)                  
 cli dbname = do
         --(dbname:rest) <- getArgs
         --let dbname = "../test.db"
