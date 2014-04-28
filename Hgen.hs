@@ -104,17 +104,20 @@ cli_gen dbname = do
        
 mm = do
         args <- getArgs
-        let trueArgs = args
+        --let trueArgs = args
         let dummyDec = [DataD [] (mkName "") [] [] []]
-        --let [_, trueargs] = words $ args !! (length args - 2)
-        --let trueArgs = read trueargs :: [String]
-        --putStrLn "Arguments are: "
-        --print trueArgs        
+        let x = words $ args !! (length args - 2)
+        let trueArgs = case x of
+                        [_, trueargs] -> read trueargs :: [String]
+                        _             -> ["--cli", "../test.db"]  
+        putStrLn "Arguments are: "
+        print trueArgs        
         case trueArgs of
                 ("--cli":dbname:_) -> do putStrLn "CLI"
                                          cli_gen dbname
                 ("--gui":_)       -> do putStrLn "GUI"
                                         cli_gen "../test.db"
+                (dbname:_)        -> cli_gen dbname                           
                 _                 -> cli_gen "../test.db"       
          `catch` ((\e ->do print e
                            putStrLn "Exception raised"

@@ -62,25 +62,29 @@ goalStr = "   Russia's intervention is justified   ::   Very True   "
 
 main = do
         arg <- getArgs
+        print arg
         case arg of          
           ("--gui":dbname:_) -> do putStrLn "GUI mode starting..."
-                    --               cli dbname
-          ("--cli":dbname:_)-> do 
-                                putStrLn "CLI mode starting..."                                     
-                                cli "../test.db" `catch` 
-                                   ((\e ->do print e
-                                             putStrLn "Exception raised"
-                                             putStrLn "back to main menu or quit? [m/q]"
-                                             ansM <- readline'
-                                             let ans = map toLower ansM
-                                             case ans of
-                                               "m" -> selfRestart
-                                               "q" -> exitImmediately $ ExitFailure (-1)
-                                               _   -> do putStrLn "default: exit program"
-                                                         exitImmediately $ ExitFailure (-1)
-                                     ):: SomeException->IO ())
-          _ -> do putStrLn "Usage: runghc Main.hs <intefacing mode> <dbname>"
-                  exitImmediately $ ExitFailure (-1)                  
+                    --             catch_cli dbname                    
+          ("--cli":dbname:_) -> catch_cli dbname
+          (dbname:_)         -> catch_cli dbname     
+          _ -> do --putStrLn "Usage: runghc Main.hs <intefacing mode> <dbname>"
+                  --exitImmediately $ ExitFailure (-1)                  
+                  catch_cli "../test.db"
+         where catch_cli dbname = do 
+                                   putStrLn "CLI mode starting..."                                     
+                                   cli dbname `catch` 
+                                      ((\e ->do print e
+                                                putStrLn "Exception raised"
+                                                putStrLn "back to main menu or quit? [m/q]"
+                                                ansM <- readline'
+                                                let ans = map toLower ansM
+                                                case ans of
+                                                  "m" -> selfRestart
+                                                  "q" -> exitImmediately $ ExitFailure (-1)
+                                                  _   -> do putStrLn "default: exit program"
+                                                            exitImmediately $ ExitFailure (-1)
+                                        ):: SomeException->IO ())
 cli dbname = do
         --(dbname:rest) <- getArgs
         --let dbname = "../test.db"
