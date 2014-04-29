@@ -11,6 +11,8 @@ import System.Environment
 import Database.HDBC
 import Database.HDBC.Sqlite3
 import UtilB
+import Hio
+import System.Directory(doesFileExist)
 import Control.Monad
 import Control.Exception
 import SelfRestart(ExitCode(..),selfRestart,exitImmediately)
@@ -65,8 +67,32 @@ cli_gen dbname = do
                                         \from hedges join posl on hedges.hid = posl.hid \
                                         \union select hedge \
                                         \from hedges join negl on hedges.hid = negl.hid"
+                                exist <- doesFileExist dbname
+                                unless exist $ do 
+                                  putStrLn "Initializing new knowledgebase..."
+                                  bulkQuery dbname initSchema
+                                  putStrLn "Hedge algebra definition is a mandatory\
+                                   \ requirement for knowledge base. Define new HA? [y/n]"
+                                  ans <- (liftM $map toLower) readline'
+                                  case ans of
+                                        "y" -> do mapM_ putStrLn hMMenu
+                                                  hManager dbname              
+                                                  putStrLn "Done initialization"
+                                        _ -> do putStrLn "HA is not yet defined"
+                                                exitImmediately ExitSuccess          
                                 conn <- connectSqlite3 dbname
                                 consQ <- quickQuery' conn querycons []
+                                disconnect conn
+                                when (null consQ) $ do
+                                  putStrLn "No hedge algebra defined. Define new HA? [y/n]" 
+                                  ans <- (liftM $map toLower) readline'
+                                  case ans of
+                                        "y" -> do mapM_ putStrLn hMMenu
+                                                  hManager dbname              
+                                                  putStrLn "Done initialization"
+                                        _ -> do putStrLn "HA is not yet defined"
+                                                exitImmediately ExitSuccess          
+                                conn <- connectSqlite3 dbname
                                 let cons = map head $ fromQuery consQ
                                 print cons           
                                  
@@ -136,6 +162,50 @@ mm = do
 q = runIO mm
 
 
+bulkQuery dbname ls = do conn <- connectSqlite3 dbname
+                         q <- mapM (\x-> run conn x []) ls
+                         commit conn
+                         disconnect conn
+                         return q
+initSchema =
+        ["PRAGMA recursive_triggers=0",
+         "CREATE TABLE hedges (hid Integer primary key NOT NULL, hedge Varchar(30) unique)",
+         "CREATE TABLE posl(hid Integer references hedges(hid) NOT NULL, pred Integer, primary key (hid))",
+         "CREATE TABLE negl(hid Integer references hedges(hid) NOT NULL, pred Integer, primary key (hid))",
+         "CREATE TABLE posrel (hid1 Integer references hedges(hid) NOT NULL, hid2 Integer references hedges(hid) NOT NULL, primary key (hid1,hid2))",
+         "CREATE TABLE negrel (hid1 Integer references hedges(hid) NOT NULL, hid2 Integer references hedges(hid) NOT NULL, primary key (hid1,hid2))",
+
+         "CREATE TABLE hstring (sid Integer primary key, hid integer references hedges(hid) NOT NULL, tail Integer references hstring(sid))", 
+         "CREATE TRIGGER posl_delete \
+         \ AFTER DELETE ON posl \
+         \ begin \
+         \         update posl set pred = pred - 1 \
+         \         where posl.pred >= OLD.pred and posl.hid != OLD.hid; \
+         \ end;",
+         "CREATE TRIGGER posl_insert  \
+         \ AFTER INSERT ON posl  \
+         \ BEGIN  \
+         \   UPDATE posl set pred = pred + 1  \
+         \      WHERE posl.pred >= NEW.pred and posl.hid != NEW.hid; \
+         \ END;",
+         "CREATE TRIGGER negl_delete \
+         \ AFTER DELETE ON negl \
+         \ begin \
+         \         update negl set pred = pred - 1 \
+         \         where negl.pred >= OLD.pred and negl.hid != OLD.hid; \
+         \ end;",
+         "CREATE TRIGGER negl_insert  \
+         \ AFTER INSERT ON negl  \
+         \ BEGIN  \
+         \   UPDATE negl set pred = pred + 1  \
+         \      WHERE negl.pred >= NEW.pred and negl.hid != NEW.hid; \
+         \ END;",
+         "CREATE TABLE literal (lid Integer, lstring Varchar(256), \
+         \ sid Integer REFERENCES hstring(sid), truthval Varchar(20), PRIMARY KEY (lid))",
+         "CREATE TABLE conjLits (cid Integer REFERENCES conj(cid), \
+         \ lid Integer REFERENCES literal(lid), primary key (cid, lid))",
+         "CREATE TABLE conj (cid Integer, name Varchar(256) DEFAULT\
+         \ \"a conjunctive normal form clause\", PRIMARY KEY (cid))"]
 --mmm :: () -> Q [Dec]
 --mmm () = unsafePerformIO mm                 
 --q = unsafePerformIO mm

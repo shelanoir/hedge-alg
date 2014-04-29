@@ -13,15 +13,15 @@ import Control.Exception
 ----------------------------------------------------
 ----------------------------------------
 ----------------------------------------
-truth1 = Fals [Very,Very,Very,More]
+{-truth1 = Fals [Very,Very,Very,More]
 truth2 = Fals [Very,More,Possibly]
 res1 = compare truth1 truth2        
-res2 = compare truth2 truth1
+res2 = compare truth2 truth1-}
 kbUnionGoal k g = zipWith smartClause (k ++ [g]) (repeat Maxt)
 
 
 ---------testing data-----------
-litA1 = Lit "America is behind the Ukraine's crisis" (Fals [More])
+{-litA1 = Lit "America is behind the Ukraine's crisis" (Fals [More])
 litB2 = Lit "Russia's intervention does not violate the International Law" (Fals [])
 litC3 = Lit "Russia's intervention is justified" (Tru [Very, More])
 litB4 = Lit "Russia's intervention does not violate the International Law" (Tru [Less])
@@ -47,7 +47,7 @@ clause = ([litC8, litC5, litC3, Lit "Russia's intervention is justified" $ Tru [
 --------------------------------
 kb = [cnf1, cnf2, cnf3, cnf4]
 goal = cnf6
-initialClauses = kbUnionGoal kb goal
+initialClauses = kbUnionGoal kb goal-}
 
 destructive :: IORef Int -> IO ()
 destructive io = modifyIORef io (+1)
@@ -235,7 +235,7 @@ cli dbname = do
                   _ -> putStrLn "please enter something meaningful"
                         
 
-test1 = do
+{-test1 = do
         io <- newIORef 3
         destructive io
         a <- readIORef io
@@ -246,7 +246,7 @@ test1 = do
         arg <- getArgs
         putStrLn $ "arguments: " ++ concat arg
         putStrLn "Commencing restart..."
-        selfRestart
+        selfRestart-}
 
 optimize :: (Ha hedge) => Clause hedge -> Clause hedge
 optimize = (\(a,b)->let (ls2,conf) = (nub . sortLits $ a, b)

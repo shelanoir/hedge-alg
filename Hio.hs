@@ -280,8 +280,8 @@ hMMenu = ["=============================================================",
           ">>= rm positive relation - add a new positive relation",
           ">>= rm negative relation - add a new negative relation",
           ">>= hmenu - print this menu",
-          ">>= main - reload hedges and back to main menu",                    
-          ">>= quit - back to main menu without reload hedges",                    
+          ">>= main - reload hedge algebra and go to main menu",                    
+          ">>= quit - exit hedge manager",                    
           "============================================================="
           ]
 
