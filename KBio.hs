@@ -98,7 +98,7 @@ getCNF db = do
                                          let q = concat $ intersperse " " qQ
                                              lstring = (fromSql string) :: String
                                              lseed = (fromSql seed) :: String
-                                         putStrLn $ "hstring: " ++ (show sid)   
+                                         --putStrLn $ "hstring: " ++ (show sid)   
                                          return [lstring,lseed,q])
                 let step [lstring, lseed, lhedges] =
                         Lit lstring $ truthval
