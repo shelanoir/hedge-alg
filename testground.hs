@@ -1,5 +1,5 @@
 import Util
-import Triv
+import UtilB
 import KBio
 import Hio
 import ProsLogic

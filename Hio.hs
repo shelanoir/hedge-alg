@@ -17,7 +17,7 @@ module Hio(
   renameHedge,-}
   ) where
 import SelfRestart
-import Triv
+import UtilB
 import Database.HDBC
 import Database.HDBC.Sqlite3
 import Control.Monad

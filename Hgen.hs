@@ -10,7 +10,7 @@ import System.Console.Readline
 import System.Environment
 import Database.HDBC
 import Database.HDBC.Sqlite3
-import Triv
+import UtilB
 import Control.Monad
 import Control.Exception
 import SelfRestart(ExitCode(..),selfRestart,exitImmediately)

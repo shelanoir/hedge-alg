@@ -17,7 +17,7 @@ module System.Console.Readline,
 module Control.Concurrent,
 module Control.Monad,
 module SelfRestart,
-module Triv,
+module UtilB,
 module Hio,
 ) 
 where
@@ -37,7 +37,7 @@ import System.Console.Readline
 
 import Control.Concurrent
 import Control.Monad
-import Triv
+import UtilB
 import Hio
 import SelfRestart (selfRestart, forkSelfRestartExePollWithAction, exitImmediately, ExitCode(..))
 

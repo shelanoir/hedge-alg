@@ -1,4 +1,4 @@
-module Triv where
+module UtilB where
 import Data.IORef
 import Data.List.Split
 import Data.Char
