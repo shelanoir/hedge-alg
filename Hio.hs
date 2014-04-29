@@ -1,7 +1,9 @@
 module Hio(
+  hManager,
+  hMMenu,
   printPosH,
   printNegH,
-  removeH,
+{-  removeH,
   removePosH,
   removeNegH,
   addNegH,
@@ -12,7 +14,7 @@ module Hio(
   addNegRel, 
   removePosRel,
   removeNegRel,
-  renameHedge,
+  renameHedge,-}
   ) where
 import SelfRestart
 import Triv
@@ -20,7 +22,7 @@ import Database.HDBC
 import Database.HDBC.Sqlite3
 import Control.Monad
 import Data.Char
-
+import SelfRestart(selfRestart,exitImmediately,ExitCode(..))
 -------------------------------------
 --TODO: add a hedge to posl, to negl
 --TODO: remove ...
@@ -258,4 +260,183 @@ removelRel table dbname hedge1' hedge2' = do
         commit conn
         disconnect conn
 
+
+hMMenu = ["=============================================================",
+          ">>= hedge structure - print the hedge structure",    
+          ">>= add positive - add a positive hedge",
+          ">>= add negative - add a negative hedge",
+          "\n",
+          ">>= rm positive - remove a positive hedge",
+          ">>= rm negative - remove a negative hedge",  
+          ">>= rm hedge - completely remove a hedge",  
+          "\n",
+          ">>= mv positive - move a positive hedge to another precedence",
+          ">>= mv negative - move a negative hedge to another precedence",
+          "\n",
+          ">>= rename hedge - rename a hedge",
+          "\n",
+          ">>= add positive relation - add a new positive relation",
+          ">>= add negative relation - add a new negative relation",
+          ">>= rm positive relation - add a new positive relation",
+          ">>= rm negative relation - add a new negative relation",
+          ">>= hmenu - print this menu",
+          ">>= main - reload hedges and back to main menu",                    
+          ">>= quit - back to main menu without reload hedges",                    
+          "============================================================="
+          ]
+
+hManager dbname = do
+          let menu = hMMenu
+--          mapM_ putStrLn menu 
+          putStrLn "\n\nPlease choose : \n"
+          command <- readline'
+          case command of
+                  "hmenu" -> do 
+                              mapM_ putStrLn menu 
+                              hManager dbname
+                  "main"  -> do selfRestart
+                                return ()                                
+                  "quit"  -> return ()              
+                  "add positive" -> do putStrLn "Please enter the name of the hedge:"
+                                       hedge' <- readline'
+                                       putStrLn "What would this hedge's precedence value be?"
+                                       pred <- readline'
+                                       putStrLn "Remove from negative list if the hedge were already there? [y/n]"
+                                       yN <- readline'
+                                       addPosH dbname hedge' pred yN        
+                                       --selfRestart
+                                       hManager dbname
+                  "rm positive" -> do putStrLn "Please enter the name of the hedge:"
+                                      hedge' <- readline'
+                                      removePosH dbname hedge'         
+                                      --selfRestart
+                                      hManager dbname
+                  "add negative" -> do putStrLn "Please enter the name of the hedge:"
+                                       hedge' <- readline'
+                                       putStrLn "What would this hedge's precedence value be?"
+                                       pred <- readline'
+                                       putStrLn "Remove from positive list if the hedge were already there? [y/n]"
+                                       yN <- readline'
+                                       addNegH dbname hedge' pred yN        
+                                       --selfRestart
+                                       hManager dbname
+                  "rm negative" -> do putStrLn "Please enter the name of the hedge:"
+                                      hedge' <- readline'
+                                      removeNegH dbname hedge'         
+                                      --selfRestart
+                                      hManager dbname
+                  "rm hedge" ->    do putStrLn "Please enter the name of the hedge:"
+                                      hedge' <- readline'
+                                      removeH dbname hedge'         
+                                      --selfRestart
+                                      hManager dbname
+                  "mv positive" -> do putStrLn "Please enter the name of the hedge:"
+                                      hedge' <- readline'
+                                      putStrLn "What would this hedge's precedence value be?"
+                                      pred <- readline'
+                                      changePosOrd hedge' pred dbname
+                                      hManager dbname
+                                      --selfRestart
+                  "mv negative" -> do putStrLn "Please enter the name of the hedge:"
+                                      hedge' <- readline'
+                                      putStrLn "What would this hedge's precedence value be?"
+                                      pred <- readline'
+                                      changeNegOrd hedge' pred dbname
+                                      --selfRestart
+                                      hManager dbname
+
+                  "rename hedge" -> do putStrLn "Please enter the name of the hedge:"          
+                                       hedge' <- readline'
+                                       putStrLn "What would this hedge's new name be?"
+                                       name' <- readline'
+                                       renameHedge dbname hedge' name'
+                                       hManager dbname
+                                       --selfRestart
+                  "add positive relation" -> do putStrLn "Please enter the name of the affecting hedge:"          
+                                                hedge1' <- readline'
+                                                putStrLn "Please enter the name of the affected hedge" 
+                                                hedge2' <- readline'
+                                                addPosRel dbname hedge1' hedge2'
+                                                hManager dbname
+                                                --selfRestart
+                  "add negative relation" -> do putStrLn "Please enter the name of the affecting hedge:"          
+                                                hedge1' <- readline'
+                                                putStrLn "Please enter the name of the affected hedge" 
+                                                hedge2' <- readline'
+                                                addNegRel dbname hedge1' hedge2'
+                                                hManager dbname
+                                                --selfRestart
+                  "rm positive relation" -> do  putStrLn "Please enter the name of the affecting hedge:"          
+                                                hedge1' <- readline'
+                                                putStrLn "Please enter the name of the affected hedge" 
+                                                hedge2' <- readline'
+                                                removePosRel dbname hedge1' hedge2'
+                                                hManager dbname
+                                                --selfRestart
+                  "rm negative relation" -> do  putStrLn "Please enter the name of the affecting hedge:"          
+                                                hedge1' <- readline'
+                                                putStrLn "Please enter the name of the affected hedge" 
+                                                hedge2' <- readline'
+                                                removeNegRel dbname hedge1' hedge2'
+                                                hManager dbname
+                                                --selfRestart
+                  "hedge structure" -> do printHedges dbname                     
+                                          q <- getLine
+                                          hManager dbname 
+                  _ -> do putStrLn "please enter something meaningful"
+                          q <- getLine
+                          hManager dbname
+
+
+                          
+printHedges dbname = do
+        putStrLn ""
+        putStrLn "Every hedges in the database:"
+        conn <- connectSqlite3 dbname
+        qQ <- quickQuery' conn "SELECT hid,hedge FROM hedges" []
+        let q = map (map fromSql) qQ :: [[String]]
+        print q
+        putStrLn ""
+        putStrLn ""
+        putStrLn "Positive hedges:"
+--        print (posLs::[Hedge])
+        putStrLn ""
+        printPosH conn        
+        putStrLn ""
+        putStrLn ""
+        putStrLn "Negative hedges:"
+--        print (negLs::[Hedge])
+        putStrLn ""
+        printNegH conn        
+        putStrLn ""
+        putStrLn ""
+        putStrLn "Hedge actually in used:"
+--        print (hedgeLs::[Hedge])
+        qQ <- quickQuery' conn "SELECT hedge FROM (\
+         \SELECT hid,hedge FROM posl NATURAL JOIN hedges\
+         \ UNION SELECT hid,hedge FROM negl NATURAL JOIN hedges ORDER BY hid)" []
+        let q = map fromSql $ concat qQ :: [String]
+        print q
+        putStrLn ""
+        putStrLn ""
+        putStrLn ""
+        putStrLn "Positive relations:"                   
+        qQ <- quickQuery' conn "SELECT h1.hedge, h2.hedge\
+         \ FROM (SELECT hid1,hid2 FROM posrel) h12, hedges h1, hedges h2\
+         \ WHERE h1.hid = h12.hid1 AND h2.hid = h12.hid2" []  
+        let q = map (map fromSql) $ qQ :: [[String]]
+        print q
+--        print (posRel::[(Hedge,Hedge)])
+        putStrLn ""
+        putStrLn ""
+        putStrLn "Negative relations:"                   
+        qQ <- quickQuery' conn "SELECT h1.hedge, h2.hedge\
+         \ FROM (SELECT hid1,hid2 FROM negrel) h12, hedges h1, hedges h2\
+         \ WHERE h1.hid = h12.hid1 AND h2.hid = h12.hid2" []  
+        let q = map (map fromSql) $ qQ :: [[String]]
+        print q
+--        print (negRel::[(Hedge,Hedge)])
+        putStrLn ""
+        disconnect conn
+        
 

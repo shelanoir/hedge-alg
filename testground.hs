@@ -67,6 +67,7 @@ main = do
           ("--gui":dbname:_) -> do putStrLn "GUI mode starting..."
                     --             catch_cli dbname                    
           ("--cli":dbname:_) -> catch_cli dbname
+          (x:_) | x == "--gui" || x == "--cli" -> catch_cli "../test.db"
           (dbname:_)         -> catch_cli dbname     
           _ -> do --putStrLn "Usage: runghc Main.hs <intefacing mode> <dbname>"
                   --exitImmediately $ ExitFailure (-1)                  
@@ -94,35 +95,15 @@ cli dbname = do
                     \\n    Alpha Resolution",
                     ">>= print - print the knowledge base",
                     ">>= check - check for the consistency of the knowledge base",
-                    "\n",
+                    ">>= hedge structure - print the information about the under-\
+                     \\n    lying hedge algebra",
                     "--------------------------------------------------------------",
-                    "\n",
                     ">>= add clause - add a new clause to the knowledge base",
                     ">>= delete clause - remove a clause from the knowledge base",
                     ">>= change clause - change a clause in the knowledge base",
-                    "\n",
                     "--------------------------------------------------------------",
-                    "\n",
-                    ">>= hedge structure - print the information about the under-\
-                     \\n    lying hedge algebra",
-                    "\n",
-                    ">>= add positive - add a positive hedge",
-                    ">>= add negative - add a negative hedge",
-                    "\n",
-                    ">>= rm positive - remove a positive hedge",
-                    ">>= rm negative - remove a negative hedge",  
-                    ">>= rm hedge - completely remove a hedge",  
-                    "\n",
-                    ">>= mv positive - move a positive hedge to another precedence",
-                    ">>= mv negative - move a negative hedge to another precedence",
-                    "\n",
-                    ">>= rename hedge - rename a hedge",
-                    "\n",
-                    ">>= add positive relation - add a new positive relation",
-                    ">>= add negative relation - add a new negative relation",
-                    "\n",
+                    ">>= hedge manager - changing hedges",
                     "--------------------------------------------------------------",
-                    "\n",
                     ">>= quit - exit program",
                     ">>= menu - print this menu",
                     "==============================================================",                    
@@ -247,66 +228,10 @@ cli dbname = do
                                               else putStrLn "Nothing has been done"
                           disconnect conn                            
                           when (null tq || (length tq /= length inp)) $ putStrLn "Nothing has been done"            
-                  "add positive" -> do putStrLn "Please enter the name of the hedge:"
-                                       hedge' <- readline'
-                                       putStrLn "What would this hedge's precedence value be?"
-                                       pred <- readline'
-                                       putStrLn "Remove from negative list if the hedge were already there? [y/n]"
-                                       yN <- readline'
-                                       addPosH dbname hedge' pred yN        
-                                       selfRestart
-                  "rm positive" -> do putStrLn "Please enter the name of the hedge:"
-                                      hedge' <- readline'
-                                      removePosH dbname hedge'         
-                                      selfRestart
-                  "add negative" -> do putStrLn "Please enter the name of the hedge:"
-                                       hedge' <- readline'
-                                       putStrLn "What would this hedge's precedence value be?"
-                                       pred <- readline'
-                                       putStrLn "Remove from positive list if the hedge were already there? [y/n]"
-                                       yN <- readline'
-                                       addNegH dbname hedge' pred yN        
-                                       selfRestart
-                  "rm negative" -> do putStrLn "Please enter the name of the hedge:"
-                                      hedge' <- readline'
-                                      removeNegH dbname hedge'         
-                                      selfRestart
-                  "rm hedge" ->    do putStrLn "Please enter the name of the hedge:"
-                                      hedge' <- readline'
-                                      removeH dbname hedge'         
-                                      selfRestart
-                  "mv positive" -> do putStrLn "Please enter the name of the hedge:"
-                                      hedge' <- readline'
-                                      putStrLn "What would this hedge's precedence value be?"
-                                      pred <- readline'
-                                      changePosOrd hedge' pred dbname
-                                      selfRestart
-                  "mv negative" -> do putStrLn "Please enter the name of the hedge:"
-                                      hedge' <- readline'
-                                      putStrLn "What would this hedge's precedence value be?"
-                                      pred <- readline'
-                                      changeNegOrd hedge' pred dbname
-                                      selfRestart
-
-                  "rename hedge" -> do putStrLn "Please enter the name of the hedge:"          
-                                       hedge' <- readline'
-                                       putStrLn "What would this hedge's new name be?"
-                                       name' <- readline'
-                                       renameHedge dbname hedge' name'
-                                       selfRestart
-                  "add positive relation" -> do putStrLn "Please enter the name of the affecting hedge:"          
-                                                hedge1' <- readline'
-                                                putStrLn "Please enter the name of the affected hedge" 
-                                                hedge2' <- readline'
-                                                addPosRel dbname hedge1' hedge2'
-                                                selfRestart
-                  "add negative relation" -> do putStrLn "Please enter the name of the affecting hedge:"          
-                                                hedge1' <- readline'
-                                                putStrLn "Please enter the name of the affected hedge" 
-                                                hedge2' <- readline'
-                                                addNegRel dbname hedge1' hedge2'
-                                                selfRestart
                   "hedge structure" -> printHedges dbname                       
+                  "hedge manager" -> do
+                                       mapM_ putStrLn hMMenu
+                                       hManager dbname
                   _ -> putStrLn "please enter something meaningful"
                         
 
