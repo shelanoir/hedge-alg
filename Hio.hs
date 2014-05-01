@@ -23,6 +23,7 @@ import Database.HDBC.Sqlite3
 import Control.Monad
 import Data.Char
 import SelfRestart(selfRestart,exitImmediately,ExitCode(..))
+import System.Environment(getProgName)
 -------------------------------------
 --TODO: add a hedge to posl, to negl
 --TODO: remove ...
@@ -262,30 +263,31 @@ removelRel table dbname hedge1' hedge2' = do
 
 
 hMMenu = ["=============================================================",
-          ">>= hedge structure - print the hedge structure",    
+          ">>= print  - print the hedge structure",    
           ">>= add positive - add a positive hedge",
           ">>= add negative - add a negative hedge",
-          "\n",
+          "-------------------------------------------------",      
           ">>= rm positive - remove a positive hedge",
           ">>= rm negative - remove a negative hedge",  
           ">>= rm hedge - completely remove a hedge",  
-          "\n",
+          "-------------------------------------------------",      
           ">>= mv positive - move a positive hedge to another precedence",
           ">>= mv negative - move a negative hedge to another precedence",
-          "\n",
           ">>= rename hedge - rename a hedge",
-          "\n",
+          "-------------------------------------------------",      
           ">>= add positive relation - add a new positive relation",
           ">>= add negative relation - add a new negative relation",
           ">>= rm positive relation - add a new positive relation",
           ">>= rm negative relation - add a new negative relation",
+          "-------------------------------------------------",      
           ">>= hmenu - print this menu",
           ">>= main - reload hedge algebra and go to main menu",                    
-          ">>= quit - exit hedge manager",                    
+          ">>= quit - exit without reload HA",                    
           "============================================================="
           ]
 
 hManager dbname = do
+          progname <- getProgName
           let menu = hMMenu
 --          mapM_ putStrLn menu 
           putStrLn "\n\nPlease choose : \n"
@@ -296,7 +298,10 @@ hManager dbname = do
                               hManager dbname
                   "main"  -> do selfRestart
                                 return ()                                
-                  "quit"  -> return ()              
+                  "quit"  -> case progname of
+                                "ghc" -> putStrLn "HA not loaded. Exit program..." 
+                                          >> exitImmediately ExitSuccess
+                                _     -> return ()              
                   "add positive" -> do putStrLn "Please enter the name of the hedge:"
                                        hedge' <- readline'
                                        putStrLn "What would this hedge's precedence value be?"
@@ -380,7 +385,7 @@ hManager dbname = do
                                                 removeNegRel dbname hedge1' hedge2'
                                                 hManager dbname
                                                 --selfRestart
-                  "hedge structure" -> do printHedges dbname                     
+                  "print"           -> do printHedges dbname                     
                                           q <- getLine
                                           hManager dbname 
                   _ -> do putStrLn "please enter something meaningful"
