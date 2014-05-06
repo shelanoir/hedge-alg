@@ -21,7 +21,7 @@ kbUnionGoal k g = zipWith smartClause (k ++ [g]) (repeat Maxt)
 
 
 ---------testing data-----------
-{-litA1 = Lit "America is behind the Ukraine's crisis" (Fals [More])
+litA1 = Lit "America is behind the Ukraine's crisis" (Fals [More])
 litB2 = Lit "Russia's intervention does not violate the International Law" (Fals [])
 litC3 = Lit "Russia's intervention is justified" (Tru [Very, More])
 litB4 = Lit "Russia's intervention does not violate the International Law" (Tru [Less])
@@ -47,7 +47,7 @@ clause = ([litC8, litC5, litC3, Lit "Russia's intervention is justified" $ Tru [
 --------------------------------
 kb = [cnf1, cnf2, cnf3, cnf4]
 goal = cnf6
-initialClauses = kbUnionGoal kb goal-}
+initialClauses = kbUnionGoal kb goal
 
 destructive :: IORef Int -> IO ()
 destructive io = modifyIORef io (+1)
