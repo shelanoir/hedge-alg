@@ -136,8 +136,10 @@ cli dbname = do
                           print (CNF input)
                           knowledgebase <- getCNF dbname
                           putStrLn $ show knowledgebase
-                          let res = prove knowledgebase (CNF input)
+                          let (res,trace) = prove knowledgebase (CNF input)
                           putStrLn $ show res
+                          putStrLn ""
+                          print trace
                           return ()                                        
                   "print" -> do
                           kb <- getCNF dbname
