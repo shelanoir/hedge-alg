@@ -46,13 +46,28 @@ clause = ([litC8, litC5, litC3, Lit "Russia's intervention is justified" $ Tru [
           , Lit "Russia's intervention is justified" $ Fals [Possibly, More], litA1, litB2, litB4, litB7, litB10], Maxt)
 --------------------------------
 kb = [cnf1, cnf2, cnf3, cnf4]
-goal = cnf6
+goal = cnf7
 initialClauses = kbUnionGoal kb goal
 
 destructive :: IORef Int -> IO ()
 destructive io = modifyIORef io (+1)
+nil = [nilH :: Lit Hedge]
+(Just res,traceL) = prove kb goal
+headIs h (a,b,c) = h == a
+findHead h tracL = find (headIs h) tracL
 
-
+retrace h tracL visited
+   | h `elem` visited = ""
+   | otherwise = 
+      case findM of
+        Nothing -> ""
+        Just (a,b,c)
+          -> r1 ++ r2 ++ r0
+           where r0 = "\n\n\n"++(show b) ++ "\n`resolvedWith`\n" ++ (show c) ++ "\n\n  => " ++ (show a)
+                 r1 = retrace b tracL nextV
+                 r2 = retrace c tracL nextV
+                 nextV = h:visited                            
+       where findM = findHead h tracL
 --------------------------------------------------------------
 
 -------------------------------------------------
@@ -134,12 +149,20 @@ cli dbname = do
                           when ((Lit "" Maxt) `elem` input) $ putStrLn 
                                   "Seems like your proposition is ill-formatted"                                
                           print (CNF input)
+
+                          putStrLn "Explain the result? [y/n]"
+                          inputM <- (liftM $map toUpper) readline'
+
                           knowledgebase <- getCNF dbname
                           putStrLn $ show knowledgebase
-                          let (res,trace) = prove knowledgebase (CNF input)
+                          let (res,traceL) = prove knowledgebase (CNF input)
+                          let nil = [nilH :: Lit Hedge]
                           putStrLn $ show res
-                          putStrLn ""
-                          print trace
+                          unless (res == Nothing || inputM /= "Y") $
+                            do let (Just ress) = res
+                               let tracL = retrace (nil,ress) traceL []
+                               putStrLn tracL                                     
+                          --print trace
                           return ()                                        
                   "print" -> do
                           kb <- getCNF dbname
