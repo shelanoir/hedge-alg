@@ -60,7 +60,7 @@ resolution' allClauses resolved trace sympair
               rawRes = concat (allClauses : imm)  
 
               addTrace = [( res, (nub . sortLits $ lits1,conf1), (nub . sortLits $ lits2,conf2))
-                         | (Just res, (lits1,conf1), (lits2,conf2)) <- als]
+                         | (Just resL, (lits1,conf1), (lits2,conf2)) <- als, res <- resL]
               nextTrace = nub $ addTrace ++ trace           
               nextResolved = nub $ [((nub . sortLits $ lits1, conf1),(nub . sortLits $ lits2, conf2))| 
                                                 (res,(lits1,conf1),(lits2,conf2)) <- als] ++ resolved
