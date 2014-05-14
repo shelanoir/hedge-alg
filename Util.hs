@@ -67,6 +67,7 @@ printLits xs = do
                 printClauses ys                
 
 
+prove kb goal = resolution $ toClause kb ++ [smartClause goal Maxt]                                       
 printHedges dbname = do
         putStrLn ""
         putStrLn "Every hedges in the database:"

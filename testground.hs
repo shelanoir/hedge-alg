@@ -71,7 +71,6 @@ retrace h tracL visited
 --------------------------------------------------------------
 
 -------------------------------------------------
-prove kb goal = resolution $ toClause kb ++ [smartClause goal Maxt]                                       
      
 goalStr = "   Russia's intervention is justified   ::   Very True   " 
 
@@ -260,29 +259,3 @@ cli dbname = do
                   _ -> putStrLn "please enter something meaningful"
                         
 
-{-test1 = do
-        io <- newIORef 3
-        destructive io
-        a <- readIORef io
-        putStr $ show a ++ "\n"
-        putStrLn $ show $ resolution $ kbUnionGoal kb goal
-        putStrLn "Enter something, anything!"
-        str <- getLine
-        arg <- getArgs
-        putStrLn $ "arguments: " ++ concat arg
-        putStrLn "Commencing restart..."
-        selfRestart-}
-
-optimize :: (Ha hedge) => Clause hedge -> Clause hedge
-optimize = (\(a,b)->let (ls2,conf) = (nub . sortLits $ a, b)
-                        grpByLit = groupBy (\(Lit str1 truth1) (Lit str2 truth2)
-                         -> str1 == str2) ls2 
-                        lsfinmax = ($grpByLit) $ map $ maximumBy 
-                          (\(Lit str1 truth1) (Lit str2 truth2)
-                                        -> compare truth1 truth2)
-                        lsfinmin =  ($grpByLit) $ map $ minimumBy 
-                          (\(Lit str1 truth1) (Lit str2 truth2)
-                                        -> compare truth1 truth2)
-                        lsfin = nub (lsfinmax ++ lsfinmin)          
-
-                      in (sortLits lsfin,conf)) 
