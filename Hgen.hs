@@ -42,8 +42,8 @@ import Data.Char(toLower)
 --
 --
 
-hedgeDef :: [String] -> [String] -> [String] -> [[String]] -> [Dec]
-hedgeDef cons pos neg rel = [DataD [] (mkName "Hedge") [] 
+hedgeDef :: [String] -> [String] -> [String] -> [[String]] -> [[String]] -> [Dec]
+hedgeDef cons pos neg rel negrel = [DataD [] (mkName "Hedge") [] 
                                 (map (\x -> NormalC (mkName x) []) cons) 
                                  [mkName "Eq",
                                   mkName "Show",
@@ -53,11 +53,12 @@ hedgeDef cons pos neg rel = [DataD [] (mkName "Hedge") []
                          [ValD (VarP $ mkName "posLs") (NormalB (ListE posConE)) [],
                           ValD (VarP $ mkName "negLs") (NormalB (ListE negConE)) [],
                           ValD (VarP $ mkName "posRel") (NormalB (ListE prel)) []
+                          {-,ValD (VarP $ mkName "negRel") (NormalB (ListE nrel)) []-}
                          ]]
         where posConE = map (ConE . mkName) pos
               negConE = map (ConE . mkName) neg
               prel     = map (TupE . (map $ ConE . mkName)) rel  
-                                
+              nrel     = map (TupE . (map $ ConE . mkName)) negrel  
 
 
 
@@ -113,6 +114,15 @@ cli_gen dbname = do
 --                                print posrelQ
                                 let posRel = map head $ map fromQuery posrelQ
                                 print posRel
+
+                                let idsnegRel = "select hid1, hid2 from negrel"
+                                idQ <- quickQuery' conn idsnegRel []
+                                negrelQ <- forM idQ (quickQuery' conn 
+                                         "select h1.hedge,h2.hedge from hedges h1, hedges h2 \
+                                          \where h1.hid = ? AND h2.hid = ?")
+--                                print negrelQ
+                                let negRel = map head $ map fromQuery negrelQ
+                                print negRel
                                 {-let cons = ["Possibly", "Very", "More", "Less"]
                                     posLs = ["Very", "More"]
                                     negLs = ["Less","Possibly"]
@@ -121,7 +131,7 @@ cli_gen dbname = do
                                               ["More","Very"],
                                               ["Very","Very"],
                                               ["More","More"]]-}                                   
-                                return (hedgeDef cons posLs negLs posRel)
+                                return (hedgeDef cons posLs negLs posRel negRel)
         where loop acc latest = if (latest=="") then return (acc)
                                   else do str2 <- readline'
                                           let acc2 = str2 ++ " " ++ acc

@@ -103,3 +103,19 @@ printHedges dbname = do
         disconnect conn
         
 
+nil = [nilH :: Lit Hedge]
+headIs h (a,b,c) = h == a
+findHead h tracL = find (headIs h) tracL
+
+retrace h tracL visited
+   | h `elem` visited = ""
+   | otherwise = 
+      case findM of
+        Nothing -> ""
+        Just (a,b,c)
+          -> r1 ++ r2 ++ r0
+           where r0 = "\n\n\n"++(show b) ++ "\n`resolvedWith`\n" ++ (show c) ++ "\n\n  => " ++ (show a)
+                 r1 = retrace b tracL nextV
+                 r2 = retrace c tracL nextV
+                 nextV = h:visited                            
+       where findM = findHead h tracL

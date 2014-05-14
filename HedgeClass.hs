@@ -38,7 +38,7 @@ class (Eq a, Ord a, Enum a, Show a, Read a) => Ha a where
 
      --relation between hedges
         allRel :: [(a,a)]
-        allRel = [(x,y) | x <- hedgeLs, y <- hedgeLs, x /= y]
+        allRel = [(x,y) | x <- hedgeLs, y <- hedgeLs]--, x /= y]
 
         posRel :: [(a,a)]
         posRel = [(x,y) | (x,y) <- allRel, not (x <-> y)]
