@@ -215,6 +215,45 @@ changeByCID id line{-newclause-} dbname = do
 
         disconnect conn
                     
+
+changeClauseByName dbname line newclause = do
+                          let inp = parseInpClause line
+                          sqlval <- forM inp
+                                     (\[lstring, hedges, lseed]                                          
+                                          -> do (Just hids) <- hStringtoHid dbname (properTruthString hedges)
+                                                conn <- connectSqlite3 dbname
+                                                let string = toSql lstring
+                                                    seed = toSql lseed
+                                                    rhids = reverse hids
+                                                (_,sid,_) <- find_sid conn (rhids, SqlNull, [])
+                                                disconnect conn
+                                                return [string,sid,seed])
+                          print inp
+                          conn <- connectSqlite3 dbname
+                          q <- forM sqlval (\x -> quickQuery' conn "SELECT cid FROM conjLits where conjLits.lid in \
+                                                  \ (SELECT lid FROM literal \
+                                                   \ WHERE lstring = ? AND sid = ? AND truthval = ?)" $ x)
+                          let tq = map (map (fromSql . head)) q :: [[String]]
+                          print tq
+                          let cid = foldl1 intersect tq
+                          unless (null tq || (length tq /= length inp)) $ do
+                            if (cid /= [] && length cid == 1) then do
+                              lids <- quickQuery' conn "SELECT lid FROM conjLits where conjLits.cid = ?" $ map toSql cid    
+                              disconnect conn
+                              if (length lids == length inp) then
+                                       do 
+                                          changeByCID (head . head $ tq :: String) newclause dbname
+                                   else putStrLn "Nothing has been done: no exact clause matched"            
+                              else if (cid == []) then putStrLn "Nothing has been done: no clause matched"
+                                      else if (length cid /= 1) then do
+                                               putStrLn "Nothing has been done: multiple clause matched:"
+                                               print cid
+                                               putStrLn "Please try again with the Change by id option"    
+                                              else putStrLn "Nothing has been done"
+                          disconnect conn                            
+                          when (null tq || (length tq /= length inp)) $ putStrLn "Nothing has been done"            
+
+
 deleteByCID :: String -> String -> IO ()
 deleteByCID id dbname = do
         conn <- connectSqlite3 dbname

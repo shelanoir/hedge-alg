@@ -17,7 +17,7 @@ import Control.Exception
 truth2 = Fals [Very,More,Possibly]
 res1 = compare truth1 truth2        
 res2 = compare truth2 truth1-}
-kbUnionGoal k g = zipWith smartClause (k ++ [g]) (repeat Maxt)
+{-kbUnionGoal k g = zipWith smartClause (k ++ [g]) (repeat Maxt)
 
 
 ---------testing data-----------
@@ -47,12 +47,12 @@ clause = ([litC8, litC5, litC3, Lit "Russia's intervention is justified" $ Tru [
 --------------------------------
 kb = [cnf1, cnf2, cnf3, cnf4]
 goal = cnf7
-initialClauses = kbUnionGoal kb goal
+initialClauses = kbUnionGoal kb goal-}
 
 destructive :: IORef Int -> IO ()
 destructive io = modifyIORef io (+1)
 nil = [nilH :: Lit Hedge]
-(Just res,traceL) = prove kb goal
+--(Just res,traceL) = prove kb goal
 headIs h (a,b,c) = h == a
 findHead h tracL = find (headIs h) tracL
 
@@ -214,44 +214,11 @@ cli dbname = do
                   "change clause" -> do
                           putStrLn "Enter the clause to be changed: "
                           line <- readline'
-                          let inp = parseInpClause line
-                          sqlval <- forM inp
-                                     (\[lstring, hedges, lseed]                                          
-                                          -> do (Just hids) <- hStringtoHid dbname (properTruthString hedges)
-                                                conn <- connectSqlite3 dbname
-                                                let string = toSql lstring
-                                                    seed = toSql lseed
-                                                    rhids = reverse hids
-                                                (_,sid,_) <- find_sid conn (rhids, SqlNull, [])
-                                                disconnect conn
-                                                return [string,sid,seed])
-                          print inp
-                          conn <- connectSqlite3 dbname
-                          q <- forM sqlval (\x -> quickQuery' conn "SELECT cid FROM conjLits where conjLits.lid in \
-                                                  \ (SELECT lid FROM literal \
-                                                   \ WHERE lstring = ? AND sid = ? AND truthval = ?)" $ x)
-                          let tq = map (map (fromSql . head)) q :: [[String]]
-                          print tq
-                          let cid = foldl1 intersect tq
-                          unless (null tq || (length tq /= length inp)) $ do
-                            if (cid /= [] && length cid == 1) then do
-                              lids <- quickQuery' conn "SELECT lid FROM conjLits where conjLits.cid = ?" $ map toSql cid    
-                              disconnect conn
-                              if (length lids == length inp) then
-                                       do putStrLn "Enter new clause: "
-                                          putStrLn "-- Please enter it in the format\n \
-                                                \  <statement> :: <truth-value> [OR|,|;] <statement> :: <truth-value> [OR|,|;]..."               
-                                          newclause <- readline'
-                                          changeByCID (head . head $ tq :: String) newclause dbname
-                                   else putStrLn "Nothing has been done: no exact clause matched"            
-                              else if (cid == []) then putStrLn "Nothing has been done: no clause matched"
-                                      else if (length cid /= 1) then do
-                                               putStrLn "Nothing has been done: multiple clause matched:"
-                                               print cid
-                                               putStrLn "Please try again with the Change by id option"    
-                                              else putStrLn "Nothing has been done"
-                          disconnect conn                            
-                          when (null tq || (length tq /= length inp)) $ putStrLn "Nothing has been done"            
+                          putStrLn "Enter new clause: "
+                          putStrLn "-- Please enter it in the format\n \
+                           \  <statement> :: <truth-value> [OR|,|;] <statement> :: <truth-value> [OR|,|;]..."             
+                          newclause <- readline'
+                          changeClauseByName dbname line newclause
                   "hedge structure" -> printHedges dbname                       
                   "hedge manager" -> do
                                        mapM_ putStrLn hMMenu
