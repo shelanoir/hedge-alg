@@ -216,7 +216,7 @@ changeByCID id line{-newclause-} dbname = do
         disconnect conn
                     
 
-changeClauseByName dbname line newclause = do
+changeClause dbname line newclause = do
                           let inp = parseInpClause line
                           sqlval <- forM inp
                                      (\[lstring, hedges, lseed]                                          
@@ -263,6 +263,44 @@ deleteByCID id dbname = do
         putStrLn $ "Remove " ++ show q ++ " conj-lits relations"
         commit conn
         disconnect conn 
+
+deleteClause dbname line = do                          
+                          let inp = parseInpClause line
+                          sqlval <- forM inp
+                                     (\[lstring, hedges, lseed]                                          
+                                          -> do (Just hids) <- hStringtoHid dbname (properTruthString hedges)
+                                                conn <- connectSqlite3 dbname
+                                                let string = toSql lstring
+                                                    seed = toSql lseed
+                                                    rhids = reverse hids
+                                                putStrLn $ "hids: " ++ (show hids) ++ "\n"    
+                                                (_,sid,_) <- find_sid conn (rhids, SqlNull, [])
+                                                disconnect conn
+                                                return [string,sid,seed])                             
+                          print sqlval
+                          conn <- connectSqlite3 dbname
+                          q <- forM sqlval (\x -> quickQuery' conn "SELECT cid FROM conjLits where conjLits.lid in \
+                                                  \ (SELECT lid FROM literal \
+                                                   \ WHERE lstring = ? AND sid = ? AND truthval = ?)" $ x)
+                          let tq = map (map (fromSql . head)) q :: [[String]]
+                          print tq
+                          let cid = foldl1 intersect tq
+                          unless (null tq || (length tq /= length inp)) $ do
+                            if (cid /= [] && length cid == 1) then do
+                              lids <- quickQuery' conn "SELECT lid FROM conjLits where conjLits.cid = ?" $ map toSql cid    
+                              disconnect conn
+                              if (length lids == length inp) then
+                                       do deleteByCID (head . head $ tq :: String) dbname
+                                   else putStrLn "Nothing has been done: no exact clause matched"            
+                              else if (cid == []) then putStrLn "Nothing has been done: no clause matched"
+                                      else if (length cid /= 1) then do
+                                               putStrLn "Nothing has been done: multiple clause matched:"
+                                               print cid
+                                               putStrLn "Please try again with the Delete by id option"    
+                                              else putStrLn "Nothing has been done"
+                          disconnect conn                            
+                          when (null tq || (length tq /= length inp)) $ putStrLn "Nothing has been done"            
+
 
 addClause dbname line = do
         {-putStrLn "Enter a clause: "
