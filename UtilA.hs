@@ -1,5 +1,5 @@
-module Util (
-module Util,
+module UtilA (
+module UtilA,
 --module ProsLogic,
 --module Ahedge,
 --module AlphaResolution,
