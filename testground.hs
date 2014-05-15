@@ -1,9 +1,9 @@
 import Util.UtilA
 import Util.UtilB
-import KBio
-import Hio
+import DBio.KBio
+import DBio.Hio
 import ProsLogic
-import Ahedge
+import Hedgen.Ahedge
 import AlphaResolution
 import Control.Exception
 ----------------------------------------------------

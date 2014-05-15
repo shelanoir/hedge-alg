@@ -18,11 +18,11 @@ module Control.Concurrent,
 module Control.Monad,
 module SelfRestart,
 module Util.UtilB,
-module Hio,
+module DBio.Hio,
 ) 
 where
 import ProsLogic
-import Ahedge
+import Hedgen.Ahedge
 import AlphaResolution
 
 import Data.IORef
@@ -38,7 +38,7 @@ import System.Console.Readline
 import Control.Concurrent
 import Control.Monad
 import Util.UtilB
-import Hio
+import DBio.Hio
 import SelfRestart (selfRestart, forkSelfRestartExePollWithAction, exitImmediately, ExitCode(..))
 
 okTruthStr str = case (hedges,seed) of 

@@ -1,4 +1,4 @@
-module Hgen  (
+module Hedgen.Hgen  (
         q,
 )
 where
@@ -11,7 +11,7 @@ import System.Environment
 import Database.HDBC
 import Database.HDBC.Sqlite3
 import Util.UtilB
-import Hio
+import DBio.Hio
 import System.Directory(doesFileExist)
 import Control.Monad
 import Control.Exception

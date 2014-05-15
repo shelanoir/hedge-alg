@@ -1,7 +1,7 @@
-module KBio 
+module DBio.KBio 
 where
 import ProsLogic
-import Ahedge
+import Hedgen.Ahedge
 import AlphaResolution
 import Util.UtilA
 -----old _test-------------------------------------------

@@ -1,4 +1,4 @@
-module Hio(
+module DBio.Hio(
   hManager,
   hMMenu,
   printPosH,
