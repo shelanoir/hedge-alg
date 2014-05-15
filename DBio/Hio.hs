@@ -30,16 +30,19 @@ import System.Environment(getProgName)
 --TODO: change precedence of posl/negl
 --TODO: remove a relationship constraint
 --TODO: add a rel constraint
-
+printlH :: IConnection conn => String -> conn -> IO ()
 printlH tabname conn = do
         qQ <- quickQuery' conn ("SELECT "++tabname++".hid,hedge,pred FROM hedges, "++tabname++" WHERE "++tabname++".hid = hedges.hid ORDER BY pred") []
         let q = ($qQ) $ map $ map (fromSql::SqlValue->String)
         putStrLn "[ HID | Hedge | Precedence ]"
         print q
 
+printPosH :: IConnection conn => conn -> IO ()
 printPosH conn = printlH "posl" conn       
+printNegH :: IConnection conn => conn -> IO ()
 printNegH conn = printlH "negl" conn       
 
+removeH :: String -> String -> IO ()
 removeH dbname hedge' = do
         let hedge = properFormat hedge'
         conn <- connectSqlite3 dbname
@@ -79,7 +82,10 @@ removelH tabname dbname hedge' = do
                 \ (SELECT HID FROM hedges WHERE hedges.hedge = ?)" [toSql hedge]
         commit conn
         disconnect conn
+
+removePosH:: String->String->IO ()
 removePosH = removelH "posl"
+removeNegH:: String->String->IO ()
 removeNegH = removelH "negl"
 
 addlH::String->String->String->String->String->IO ()
@@ -143,7 +149,9 @@ addlH table dbname hedge' pred yN= do
                     disconnect conn    
   --                  selfRestart                    
 
+addNegH:: String->String->String->String->IO ()
 addNegH = addlH "negl"
+addPosH:: String->String->String->String->IO ()
 addPosH = addlH "posl"                   
 
 
@@ -165,9 +173,12 @@ changeOrd table hedge' newpred dbname = do
         disconnect conn
     --    selfRestart
 
+changePosOrd :: String->String->String->IO ()
 changePosOrd = changeOrd "posl"
+changeNegOrd :: String->String->String->IO ()
 changeNegOrd = changeOrd "negl"
 
+renameHedge :: String -> String -> String -> IO ()
 renameHedge dbname hedge' new' = do
         conn <- connectSqlite3 dbname
         let hedge = properFormat hedge'
@@ -177,6 +188,7 @@ renameHedge dbname hedge' new' = do
         commit conn
         disconnect conn
 
+addlRel :: String -> String -> String -> String -> IO ()
 addlRel table dbname hedge1' hedge2' = do
         conn <- connectSqlite3 dbname
         let hedge1 = properFormat hedge1'
@@ -218,13 +230,14 @@ addlRel table dbname hedge1' hedge2' = do
         commit conn
         disconnect conn
 
+addPosRel :: String -> String -> String -> IO ()
 addPosRel = addlRel "posrel"        
+addNegRel :: String -> String -> String -> IO ()
 addNegRel = addlRel "negrel"        
 
 
-removePosRel = removelRel "posrel"        
-removeNegRel = removelRel "negrel"        
 
+removelRel :: String -> String -> String -> String -> IO ()
 removelRel table dbname hedge1' hedge2' = do
         conn <- connectSqlite3 dbname
         let hedge1 = properFormat hedge1'
@@ -261,7 +274,12 @@ removelRel table dbname hedge1' hedge2' = do
         commit conn
         disconnect conn
 
+removePosRel :: String -> String -> String -> IO ()
+removePosRel = removelRel "posrel"        
+removeNegRel :: String -> String -> String -> IO ()
+removeNegRel = removelRel "negrel"        
 
+hMMenu :: [String]
 hMMenu = ["=============================================================",
           ">>= print  - print the hedge structure",    
           ">>= add positive - add a positive hedge",
@@ -285,7 +303,7 @@ hMMenu = ["=============================================================",
           ">>= quit - exit without reload HA",                    
           "============================================================="
           ]
-
+hManager :: String -> IO ()
 hManager dbname = do
           progname <- getProgName
           let menu = hMMenu
@@ -393,7 +411,7 @@ hManager dbname = do
                           hManager dbname
 
 
-                          
+printHedges :: String -> IO ()                          
 printHedges dbname = do
         putStrLn ""
         putStrLn "Every hedges in the database:"

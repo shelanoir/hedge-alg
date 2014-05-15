@@ -61,9 +61,8 @@ hedgeDef cons pos neg rel negrel = [DataD [] (mkName "Hedge") []
               nrel     = map (TupE . (map $ ConE . mkName)) negrel  
 
 
-
-mm::IO [Dec]
-cli_gen dbname = do
+cliGen :: FilePath -> IO [Dec]
+cliGen dbname = do
                                 let querycons = "select hedge \
                                         \from hedges join posl on hedges.hid = posl.hid \
                                         \union select hedge \
@@ -138,7 +137,8 @@ cli_gen dbname = do
                                           loop acc2 str2
 
        
-mm = do
+startup::IO [Dec]
+startup = do
         args <- getArgs
         --let trueArgs = args
         let dummyDec = [DataD [] (mkName "") [] [] []]
@@ -150,11 +150,11 @@ mm = do
         print trueArgs        
         case trueArgs of
                 ("--cli":dbname:_) -> do putStrLn "CLI"
-                                         cli_gen dbname
+                                         cliGen dbname
                 ("--gui":_)       -> do putStrLn "GUI"
-                                        cli_gen "../test.db"
-                (dbname:_)        -> cli_gen dbname                           
-                _                 -> cli_gen "../test.db"       
+                                        cliGen "../test.db"
+                (dbname:_)        -> cliGen dbname                           
+                _                 -> cliGen "../test.db"       
          `catch` ((\e ->do print e
                            putStrLn "Exception raised"
                            putStrLn "back to main menu or quit? [m/q]"
@@ -169,14 +169,16 @@ mm = do
                                        exitImmediately $ ExitFailure (-1)
                                        return dummyDec
                      ):: SomeException->IO [Dec])
-q = runIO mm
+q::Q [Dec]
+q = runIO startup
 
-
+bulkQuery :: FilePath -> [String] -> IO [Integer]
 bulkQuery dbname ls = do conn <- connectSqlite3 dbname
                          q <- mapM (\x-> run conn x []) ls
                          commit conn
                          disconnect conn
                          return q
+initSchema :: [String]
 initSchema =
         ["PRAGMA recursive_triggers=0",
          "CREATE TABLE hedges (hid Integer primary key NOT NULL, hedge Varchar(30) unique)",
@@ -219,7 +221,7 @@ initSchema =
 --mmm :: () -> Q [Dec]
 --mmm () = unsafePerformIO mm                 
 --q = unsafePerformIO mm
-dataDef :: String -> [String] -> {-Q-} [Dec]
+{-dataDef :: String -> [String] -> {-Q-} [Dec]
 dataDef name cons = {-return-} [DataD [] (mkName name) [] 
                                 (map (\x -> NormalC (mkName x) []) cons) 
                                  [mkName "Eq",
@@ -235,4 +237,4 @@ dataDef' a b = return (dataDef a b)
                                 putStrLn "Enter data constructors"
                                 str <- loop [] " "
                                 let strr = words str
-                                dataDef' typ strr-}
+                                dataDef' typ strr-}-}

@@ -13,9 +13,11 @@ import Control.Concurrent
 import Control.Monad
 
 --require Data.Char
+properFormat :: String -> String
 properFormat [] = []
 properFormat hedgestr = toUpper (head hedgestr) : map toLower (tail hedgestr)
 
+properTruthString :: String -> [String]
 properTruthString [] = []
 properTruthString (x:xs) = map properFormat . splitOn " " $ (x:xs)
 
@@ -23,6 +25,7 @@ properTruthString (x:xs) = map properFormat . splitOn " " $ (x:xs)
 fromQuery :: [[SqlValue]] -> [[String]]
 fromQuery = map (map (fromSql :: SqlValue->String)) 
 
+readline' :: IO String
 readline' = do maybesmt <- readline ">>= "        
                case maybesmt of
                 Nothing -> return ""

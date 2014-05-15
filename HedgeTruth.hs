@@ -27,10 +27,12 @@ instance (Show h) => Show (Truth h) where
         show Maxt = "Maxt"
         show Mint = "Mint"
 
+isHTrue :: Truth h -> Bool
 isHTrue (Tru h) = True
 isHTrue Maxt = True
 isHTrue Mint = False
 isHTrue (Fals h) = False
+isHFalse :: Truth h -> Bool
 isHFalse = not . isHTrue
 
 andH :: (Ha h) => Truth h -> Truth h -> Truth h
