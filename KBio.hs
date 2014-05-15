@@ -3,7 +3,7 @@ where
 import ProsLogic
 import Ahedge
 import AlphaResolution
-import UtilA
+import Util.UtilA
 -----old _test-------------------------------------------
 --sid_to_hstring:: String->SqlValue->IO (Maybe [String])
 sid_to_hstring dbname sid = do

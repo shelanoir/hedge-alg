@@ -10,7 +10,7 @@ import System.Console.Readline
 import System.Environment
 import Database.HDBC
 import Database.HDBC.Sqlite3
-import UtilB
+import Util.UtilB
 import Hio
 import System.Directory(doesFileExist)
 import Control.Monad

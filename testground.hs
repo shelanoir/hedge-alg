@@ -1,5 +1,5 @@
-import UtilA
-import UtilB
+import Util.UtilA
+import Util.UtilB
 import KBio
 import Hio
 import ProsLogic

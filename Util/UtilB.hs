@@ -1,4 +1,4 @@
-module UtilB where
+module Util.UtilB where
 import Data.IORef
 import Data.List.Split
 import Data.Char

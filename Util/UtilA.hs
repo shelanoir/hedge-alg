@@ -1,5 +1,5 @@
-module UtilA (
-module UtilA,
+module Util.UtilA (
+module Util.UtilA,
 --module ProsLogic,
 --module Ahedge,
 --module AlphaResolution,
@@ -17,7 +17,7 @@ module System.Console.Readline,
 module Control.Concurrent,
 module Control.Monad,
 module SelfRestart,
-module UtilB,
+module Util.UtilB,
 module Hio,
 ) 
 where
@@ -37,7 +37,7 @@ import System.Console.Readline
 
 import Control.Concurrent
 import Control.Monad
-import UtilB
+import Util.UtilB
 import Hio
 import SelfRestart (selfRestart, forkSelfRestartExePollWithAction, exitImmediately, ExitCode(..))
 
