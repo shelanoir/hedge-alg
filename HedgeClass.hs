@@ -14,7 +14,6 @@
 module HedgeClass (
         Ha(..),
         module Data.List
-        
 ) where
 
 import Data.List
