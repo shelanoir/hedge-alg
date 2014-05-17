@@ -1,3 +1,5 @@
+module Main where
+
 import Util.UtilA
 import Util.UtilB
 import DBio.KBio
@@ -6,57 +8,6 @@ import ProsLogic
 import Hedgen.Ahedge
 import AlphaResolution
 import Control.Exception
-----------------------------------------------------
---- TODO:
---- tracing/explaining feature
---- user interface
-----------------------------------------------------
-----------------------------------------
-----------------------------------------
-{-truth1 = Fals [Very,Very,Very,More]
-truth2 = Fals [Very,More,Possibly]
-res1 = compare truth1 truth2        
-res2 = compare truth2 truth1-}
-{-kbUnionGoal k g = zipWith smartClause (k ++ [g]) (repeat Maxt)
-
-
----------testing data-----------
-litA1 = Lit "America is behind the Ukraine's crisis" (Fals [More])
-litB2 = Lit "Russia's intervention does not violate the International Law" (Fals [])
-litC3 = Lit "Russia's intervention is justified" (Tru [Very, More])
-litB4 = Lit "Russia's intervention does not violate the International Law" (Tru [Less])
-litC5 = Lit "Russia's intervention is justified" (Tru [Possibly])
-litA6 = Lit "America is behind the Ukraine's crisis" (Tru [Possibly])
-litB7 = Lit "Russia's intervention does not violate the International Law" (Tru [Very])
-
-litC8 = Lit "Russia's intervention is justified" (Fals [Very]) --negated goal
-litC9 = Lit "America is behind the Ukraine's crisis" (Fals [Possibly])
-litB10 = Lit "Russia's intervention does not violate the International Law" (Fals [More])
-
-cnf1 = smartCNF [litA1, litB2, litC3]
-cnf2 = smartCNF [litB4, litC5]
-cnf3 = smartCNF [litA6]
-cnf4 = smartCNF [litB7]
-cnf5 = smartCNF [litC8] -- negated goal
-cnf6 = smartCNF [litC9]
-cnf7 = smartCNF [litC8,litC9,litB10]
-clause::Clause Hedge
-clause = ([litC8, litC5, litC3, Lit "Russia's intervention is justified" $ Tru [Very, Possibly, More]
-          , Lit "Russia's intervention is justified" $ Fals [Very, More]
-          , Lit "Russia's intervention is justified" $ Fals [Possibly, More], litA1, litB2, litB4, litB7, litB10], Maxt)
---------------------------------
-kb = [cnf1, cnf2, cnf3, cnf4]
-goal = cnf7
-initialClauses = kbUnionGoal kb goal-}
-
-destructive :: IORef Int -> IO ()
-destructive io = modifyIORef io (+1)
---(Just res,traceL) = prove kb goal
---------------------------------------------------------------
-
--------------------------------------------------
-     
-goalStr = "   Russia's intervention is justified   ::   Very True   " 
 
 main = do
         arg <- getArgs
