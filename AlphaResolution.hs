@@ -41,7 +41,8 @@ confidence conf1 conf2 t1 t2
 resolution xs = resolution' xs {-xs-} [] [] sympair
         where litsyms = nub [str|(lits, truth)<-xs, (Lit str tr) <- lits]
               litsymstrue = map (\x-> ([Lit x Mint],Maxt)) litsyms
-              sympair = map (\x@([Lit str tr], maxt)-> (str, (resolution'' (x:xs) []))) litsymstrue               
+              sympair = map (\x@([Lit str tr], maxt)-> (str, (resolution'' (x:kb) []))) litsymstrue               
+              kb = init xs
 
                 
 resolution' allClauses resolved trace sympair 
