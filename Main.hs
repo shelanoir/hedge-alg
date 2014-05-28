@@ -74,6 +74,9 @@ cli dbname = do
                           knowledgebase <- getCNF dbname
                           putStrLn $ show knowledgebase
                           let (res,traceL) = prove knowledgebase (CNF input)
+                          case res of
+                            Nothing -> putStrLn $ show res ++ ": the proposition is not provable"
+                            _   -> putStrLn $ "The confidence is: " ++ show res
                           putStrLn $ show res
                           unless (res == Nothing || inputM /= "Y") $
                             do let (Just ress) = res
