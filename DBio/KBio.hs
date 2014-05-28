@@ -140,7 +140,7 @@ parseGoals inp =  map parseGoal ls
 ---------------
 --end parsegoal
 ---------------
-
+magicNil = "ioejhfiSUH>DN)#(*&YWHDSKJNCS(@#*YSAKJCN(*@Y#EASKJCNNC<WAO*EY@(*HOIASLKJ(*WASKDJH"
 ----------------
 --add new clause
 --to db
@@ -149,15 +149,22 @@ parseGoals inp =  map parseGoal ls
 parseInpClause inp = map stepLit ls
         where 
             ls = join . map (splitOn ";") . join . map (splitOn ",") . splitOn "OR" $ inp                
-            stepLit lit = [lstring,hedges,seed]
+            stepLit lit = case ok_hedges of
+                                True -> [lstring,hedges,seed]
+                                False -> [magicNil,"","Mint"]
               where [lstring,truthstring] = case 
                                       (map (reverse . dropWhile (\x->x==' ') . 
                                       reverse . dropWhile (\x->x==' '))  $ splitOn "::" lit) of
+                                            [_,""] -> [magicNil,"Mint"]
                                             [lstring, truthstring] -> [lstring,truthstring]
-                                            _ -> ["", "Mint"]
+                                            _ -> [magicNil, "Mint"]
                     hstring =  properTruthString truthstring                
                     hedges = concat . intersperse " " . init $ hstring
                     seed = last hstring                                                     
+                    ok_hedges = seed `elem` ["True","False","Maxt","Mint"] && (and $ map (\x -> x `elem` hlist) 
+                                $ initHstring) && not (null initHstring)
+                    initHstring = init hstring
+                    hlist = map show (hedgeLs::[Hedge])
 changeByCID :: String -> String -> String -> IO ()
 changeByCID id line{-newclause-} dbname = do
         --conn <- connectSqlite3 dbname
@@ -165,7 +172,9 @@ changeByCID id line{-newclause-} dbname = do
         putStrLn "-- Please enter it in the format\n \
                 \  <statement> :: <truth-value> [OR|,|;] <statement> :: <truth-value> [OR|,|;]..."               
         line <- readline'-}
-        let inp = parseInpClause line{-newclause-}        
+       let inp = parseInpClause line{-newclause-}        
+       when ([magicNil,"","Mint"] `elem` inp) $ putStrLn "Please enter a valid clause!" >> return ()
+       unless ([magicNil,"","Mint"] `elem` inp) $ do
         sqlval <- forM inp
                        (\[lstring, hedges, lseed]
                           -> do (Just sid) <- insert_if_not_exist_sid dbname hedges                            
@@ -217,7 +226,9 @@ changeByCID id line{-newclause-} dbname = do
                     
 
 changeClause dbname line newclause = do
-                          let inp = parseInpClause line
+       let inp = parseInpClause line
+       when ([magicNil,"","Mint"] `elem` inp) $ putStrLn "Please enter a valid clause!" >> return ()
+       unless ([magicNil,"","Mint"] `elem` inp) $ do
                           sqlval <- forM inp
                                      (\[lstring, hedges, lseed]                                          
                                           -> do (Just hids) <- hStringtoHid dbname (properTruthString hedges)
@@ -265,7 +276,9 @@ deleteByCID id dbname = do
         disconnect conn 
 
 deleteClause dbname line = do                          
-                          let inp = parseInpClause line
+       let inp = parseInpClause line
+       when ([magicNil,"","Mint"] `elem` inp) $ putStrLn "Please enter a valid clause!" >> return ()
+       unless ([magicNil,"","Mint"] `elem` inp) $ do
                           sqlval <- forM inp
                                      (\[lstring, hedges, lseed]                                          
                                           -> do (Just hids) <- hStringtoHid dbname (properTruthString hedges)
@@ -307,7 +320,9 @@ addClause dbname line = do
         putStrLn "-- Please enter it in the format\n \
             \  <statement> :: <truth-value> [OR|,|;] <statement> :: <truth-value> [OR|,|;]..."
         line <- readline'-}
-        let inp = parseInpClause line{-newclause-}        
+       let inp = parseInpClause line{-newclause-}        
+       when ([magicNil,"","Mint"] `elem` inp) $ putStrLn "Please enter a valid clause!" >> return ()
+       unless ([magicNil,"","Mint"] `elem` inp) $ do
         sqlval <- forM inp
                        (\[lstring, hedges, lseed]
                           -> do (Just sid) <- insert_if_not_exist_sid dbname hedges                            

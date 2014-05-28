@@ -31,3 +31,8 @@ readline' = do maybesmt <- readline ">>= "
                 Nothing -> return ""
                 Just x -> addHistory x >> return x   
 
+readline'' :: String -> IO String
+readline'' prompt = do maybesmt <- readline prompt        
+                       case maybesmt of
+                        Nothing -> return ""
+                        Just x -> addHistory x >> return x   
