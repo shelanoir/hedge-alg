@@ -67,6 +67,9 @@ cliGen dbname = do
                                         \from hedges join posl on hedges.hid = posl.hid \
                                         \union select hedge \
                                         \from hedges join negl on hedges.hid = negl.hid"
+                                when (null dbname) $ do
+                                  putStrLn "empty dbname argument"
+                                  exitImmediately $ ExitFailure (-1)       
                                 exist <- doesFileExist dbname
                                 unless exist $ do 
                                   putStrLn "Initializing new knowledgebase..."
@@ -151,10 +154,10 @@ startup = do
         case trueArgs of
                 ("--cli":dbname:_) -> do putStrLn "CLI"
                                          cliGen dbname
-                ("--gui":_)       -> do putStrLn "GUI"
-                                        cliGen "../test.db"
+                ("--gui":dbname:_)       -> do putStrLn "GUI"
+                                               cliGen dbname
                 (dbname:_)        -> cliGen dbname                           
-                _                 -> cliGen "../test.db"       
+                _                 -> cliGen ""       
          `catch` ((\e ->do print e
                            putStrLn "Exception raised"
                            putStrLn "back to main menu or quit? [m/q]"

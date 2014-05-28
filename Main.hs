@@ -16,11 +16,11 @@ main = do
           ("--gui":dbname:_) -> do putStrLn "GUI mode starting..."
                     --             catch_cli dbname                    
           ("--cli":dbname:_) -> catch_cli dbname
-          (x:_) | x == "--gui" || x == "--cli" -> catch_cli "../test.db"
+          (x:_) | x == "--gui" || x == "--cli" -> return ()
           (dbname:_)         -> catch_cli dbname     
           _ -> do --putStrLn "Usage: runghc Main.hs <intefacing mode> <dbname>"
                   --exitImmediately $ ExitFailure (-1)                  
-                  catch_cli "../test.db"
+                  return ()
          where catch_cli dbname = do 
                                    putStrLn "CLI mode starting..."                                     
                                    cli dbname `catch` 
@@ -66,15 +66,6 @@ cli dbname = do
    
           case command of
                   "menu"  -> mapM_ putStrLn menu
-                  "quit"  -> exitImmediately ExitSuccess
-                  "check" -> do
-                          putStrLn "Checking ..."
-                          knowledgebase <- getCNF dbname
-                          let res = resolution'' (toClause knowledgebase) []
-                          print res
-                          case res of
-                                  Nothing -> putStrLn "KB is consistent"
-                                  Just x  -> putStrLn "[WARNING!!] KB is inconsistent"
                   "prove" -> do
                           putStrLn "What do you want me to prove for you?"
                           putStrLn "-- Please enter it in the format\n\
@@ -97,6 +88,15 @@ cli dbname = do
                                putStrLn tracL                                     
                           --print trace
                           return ()                                        
+                  "quit"  -> exitImmediately ExitSuccess
+                  "check" -> do
+                          putStrLn "Checking ..."
+                          knowledgebase <- getCNF dbname
+                          let res = resolution'' (toClause knowledgebase) []
+                          print res
+                          case res of
+                                  Nothing -> putStrLn "KB is consistent"
+                                  Just x  -> putStrLn "[WARNING!!] KB is inconsistent"
                   "print" -> do
                           kb <- getCNF dbname
                           putStrLn $ show kb                               
