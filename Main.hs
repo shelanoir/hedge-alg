@@ -120,7 +120,9 @@ kbManager dbname = do
                           kbManager dbname        
                   "print" -> do
                           kb <- getCNF dbname
-                          putStrLn $ show kb                               
+                          let kbb = map (\(CNF x) -> x) kb
+                          print kbb
+                          --putStrLn $ show kb                               
                           q <- getLine
                           kbManager dbname        
                   "add clause" -> do

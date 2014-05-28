@@ -191,6 +191,7 @@ initSchema =
          "CREATE TABLE negrel (hid1 Integer references hedges(hid) NOT NULL, hid2 Integer references hedges(hid) NOT NULL, primary key (hid1,hid2))",
 
          "CREATE TABLE hstring (sid Integer primary key, hid integer references hedges(hid) NOT NULL, tail Integer references hstring(sid))", 
+         "INSERT INTO hstring (sid,hid,tail) VALUES (NULL,0,NULL)",
          "CREATE TRIGGER posl_delete \
          \ AFTER DELETE ON posl \
          \ begin \

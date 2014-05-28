@@ -17,7 +17,8 @@ sid_to_hstring dbname sid = do
         return $ map fromSql $ concat q :: IO [String]
 
 hStringtoHid:: String->[String]->IO (Maybe [SqlValue])
-hStringtoHid dbname hstring = do
+hStringtoHid dbname hstring = do 
+      if (hstring/=[]) then do
         conn <- connectSqlite3 dbname
         q <- forM (map toSql hstring) (\x->quickQuery' conn "SELECT hid FROM hedges WHERE hedge = ?" [x])
         disconnect conn
@@ -25,7 +26,7 @@ hStringtoHid dbname hstring = do
         case q of
            _ | [] `elem` q -> return Nothing      
              | otherwise ->  return $ Just (concat . concat $ q)
-
+      else return (Just [SqlNull])
 find_sid conn ( [], acc, (x:xs)) = do
         return ([], acc, (x:xs))
 find_sid conn ( (x:xs), acc, processed) = do        
@@ -47,6 +48,8 @@ insert_if_not_exist_sid dbname hString = do
                  case (remained,acc,processed) of
                         ([], acc, processed) | processed == reverse x -> return $ Just acc
                                              | otherwise -> return Nothing
+                        ([SqlNull], acc, processed) | processed == reverse x -> return $ Just acc
+                                             | otherwise -> return $ Just SqlNull
                         ((x:xs), acc, processed)
                           -> do q <- foldM step (Just acc) remained
                                 case q of (Just SqlNull) -> return Nothing
@@ -162,7 +165,7 @@ parseInpClause inp = map stepLit ls
                     hedges = concat . intersperse " " . init $ hstring
                     seed = last hstring                                                     
                     ok_hedges = seed `elem` ["True","False","Maxt","Mint"] && (and $ map (\x -> x `elem` hlist) 
-                                $ initHstring) && not (null initHstring)
+                                $ initHstring)
                     initHstring = init hstring
                     hlist = map show (hedgeLs::[Hedge])
 changeByCID :: String -> String -> String -> IO ()
@@ -183,7 +186,7 @@ changeByCID id line{-newclause-} dbname = do
                                 return [string,sid,seed])                              
         conn <- connectSqlite3 dbname 
         q <- forM sqlval (\x -> quickQuery' conn "SELECT lstring, sid, truthval FROM literal \
-                                 \ WHERE lstring = ? AND sid = ? AND truthval = ?" $ x)
+                                 \ WHERE lstring = ? AND sid IS ? AND truthval = ?" $ x)
         let tq = concat q
         let the_rest' = dropWhile (\x-> x `elem` tq) sqlval
         unless (null the_rest') $ do
@@ -193,7 +196,7 @@ changeByCID id line{-newclause-} dbname = do
         unless (not $ null the_rest') $ putStrLn "No new literal inserted"
         
         lids1 <- forM sqlval (\x -> quickQuery' conn "SELECT lid FROM literal WHERE \
-                                                \ lstring = ? AND sid = ? AND truthval = ?"
+                                                \ lstring = ? AND sid IS ? AND truthval = ?"
                                                x)
         cid1 <- (\x-> quickQuery' conn "SELECT conjLits.cid FROM \ 
                         \ conjLits JOIN literal ON conjLits.lid = literal.lid \
@@ -210,7 +213,7 @@ changeByCID id line{-newclause-} dbname = do
                 q <- run conn "INSERT INTO conj (cid, name) VALUES (?,?)" [toSql id, toSql id]
 
                 lids <- forM sqlval (\x -> quickQuery' conn "SELECT lid FROM literal WHERE \
-                                                        \ lstring = ? AND sid = ? AND truthval = ?"
+                                                        \ lstring = ? AND sid IS ? AND truthval = ?"
                                                        x)
                 let lids' = concat lids
                 q <- forM lids' (\x -> run conn "INSERT INTO conjLits (cid,lid) VALUES (?,?)"
@@ -243,7 +246,7 @@ changeClause dbname line newclause = do
                           conn <- connectSqlite3 dbname
                           q <- forM sqlval (\x -> quickQuery' conn "SELECT cid FROM conjLits where conjLits.lid in \
                                                   \ (SELECT lid FROM literal \
-                                                   \ WHERE lstring = ? AND sid = ? AND truthval = ?)" $ x)
+                                                   \ WHERE lstring = ? AND sid IS ? AND truthval = ?)" $ x)
                           let tq = map (map (fromSql . head)) q :: [[String]]
                           print tq
                           let cid = foldl1 intersect tq
@@ -272,6 +275,7 @@ deleteByCID id dbname = do
         putStrLn $ "Remove " ++ show q ++ " clauses"
         q <- run conn "DELETE FROM conjLits WHERE cid = ?" [toSql id]
         putStrLn $ "Remove " ++ show q ++ " conj-lits relations"
+        putStrLn "Clause deleted"
         commit conn
         disconnect conn 
 
@@ -286,17 +290,17 @@ deleteClause dbname line = do
                                                 let string = toSql lstring
                                                     seed = toSql lseed
                                                     rhids = reverse hids
-                                                putStrLn $ "hids: " ++ (show hids) ++ "\n"    
+                                                --putStrLn $ "hids: " ++ (show hids) ++ "\n"    
                                                 (_,sid,_) <- find_sid conn (rhids, SqlNull, [])
                                                 disconnect conn
                                                 return [string,sid,seed])                             
-                          print sqlval
+                          --print sqlval
                           conn <- connectSqlite3 dbname
                           q <- forM sqlval (\x -> quickQuery' conn "SELECT cid FROM conjLits where conjLits.lid in \
                                                   \ (SELECT lid FROM literal \
-                                                   \ WHERE lstring = ? AND sid = ? AND truthval = ?)" $ x)
+                                                   \ WHERE lstring = ? AND sid IS ? AND truthval = ?)" $ x)
                           let tq = map (map (fromSql . head)) q :: [[String]]
-                          print tq
+                          --print tq
                           let cid = foldl1 intersect tq
                           unless (null tq || (length tq /= length inp)) $ do
                             if (cid /= [] && length cid == 1) then do
@@ -308,7 +312,7 @@ deleteClause dbname line = do
                               else if (cid == []) then putStrLn "Nothing has been done: no clause matched"
                                       else if (length cid /= 1) then do
                                                putStrLn "Nothing has been done: multiple clause matched:"
-                                               print cid
+                                               --print cid
                                                putStrLn "Please try again with the Delete by id option"    
                                               else putStrLn "Nothing has been done"
                           disconnect conn                            
@@ -333,12 +337,13 @@ addClause dbname line = do
         putStrLn ""
         conn <- connectSqlite3 dbname
         q <- forM sqlval (\x -> quickQuery' conn "SELECT lstring, sid , truthval FROM literal \
-                                \ WHERE lstring = ? AND sid = ? AND truthval = ?" $ x)
+                                \ WHERE lstring = ? AND sid IS ? AND truthval = ?" $ x)
         let tq = concat q
         let the_rest' = dropWhile (\x-> x `elem` tq) sqlval
         --let the_rest = dropWhile (\x-> x `elem` tq) inp
         --putStrLn $ show the_rest'
         unless (null the_rest') $ do
+          --print the_rest'
           q <- forM the_rest' (\x -> run conn "INSERT INTO literal (lstring, sid, truthval) \
                                 \ VALUES (?, ?, ?)" x)                                   
           putStrLn "New literals inserted."
@@ -346,13 +351,18 @@ addClause dbname line = do
         
         ----Check if there were any cnf exactly the same as the
         ----one being added
-        lids1 <- forM sqlval (\x -> quickQuery' conn "SELECT lid FROM literal WHERE \
-                                                \ lstring = ? AND sid = ? AND truthval = ?"
+        print sqlval
+        lidss1 <- forM sqlval (\x -> quickQuery' conn "SELECT lid FROM literal WHERE \
+                                                \ lstring = ? AND sid IS ? AND truthval = ?"
                                                x)
+        print lidss1
+        let lids1 = case lidss1 of
+                        [[]] -> [[[SqlNull]]]
+                        _ -> lidss1
         cid1 <- (\x-> quickQuery' conn "SELECT conjLits.cid FROM \ 
                         \ conjLits JOIN literal ON conjLits.lid = literal.lid \
-                        \ WHERE literal.lid = ?" $ concat x) $ head lids1
-        --putStrLn $ show cid1
+                        \ WHERE literal.lid IS ?" $ concat x) $ head lids1
+        putStrLn $ "cids "++ show cid1
         lids2 <- forM cid1 (\x -> quickQuery' conn "SELECT conjLits.lid FROM \
                         \ conjLits WHERE conjLits.cid = ?" x)
         let lids1' = sort . map head . concat . map (map $ map fromSql) $ lids1 :: [Int]
@@ -364,9 +374,13 @@ addClause dbname line = do
                 let [[cid]] = cid'
                 q <- run conn "UPDATE conj SET name = ? WHERE cid = ?" [toSql cid, toSql cid]
 
-                lids <- forM sqlval (\x -> quickQuery' conn "SELECT lid FROM literal WHERE \
-                                                        \ lstring = ? AND sid = ? AND truthval = ?"
+                lidss <- forM sqlval (\x -> quickQuery' conn "SELECT lid FROM literal WHERE \
+                                                        \ lstring = ? AND sid IS ? AND truthval = ?"
                                                        x)
+                print lidss
+                let lids = case lidss of
+                        [[]] -> [[[SqlNull]]]
+                        _ -> lidss
                 putStrLn $ show lids
                 putStrLn $ show cid
                 let lids' = concat lids
@@ -375,7 +389,8 @@ addClause dbname line = do
                 q <- quickQuery' conn "SELECT lstring, sid, truthval \
                         \FROM literal JOIN conjLits ON conjLits.lid = literal.lid \
                         \WHERE conjLits.cid = ?" [cid]
-                print ( map (map fromSql) q :: [[String]])
+                --print ( map (map fromSql) q :: [[String]])
+                print q
                 commit conn
             else putStrLn "No new clause added"    
         disconnect conn
