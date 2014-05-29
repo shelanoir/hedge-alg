@@ -72,7 +72,7 @@ cli dbname = do
                           putStrLn "Explain the result? [y/n]"
                           inputM <- (liftM $map toUpper) $ readline'' "[EXPLAIN?]> "
                           knowledgebase <- getCNF dbname
-                          putStrLn $ show knowledgebase ++ show (CNF input)
+                          --putStrLn $ show knowledgebase ++ show (CNF input)
                           let (res,traceL) = prove knowledgebase (CNF input)
                           case res of
                             Nothing -> putStrLn $ show res ++ ": the proposition is not provable"
