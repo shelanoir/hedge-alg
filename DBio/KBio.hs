@@ -1,4 +1,9 @@
-module DBio.KBio 
+module DBio.KBio (
+        cmenu,
+        kbManager,
+        parseGoals,
+        getCNF
+        )
 where
 import ProsLogic
 import Hedgen.Ahedge
@@ -401,3 +406,66 @@ addClause dbname line = do
 
 
 
+cmenu = [
+         "==============================================================",
+         ">>= cmenu- print this menu",
+         ">>= print - print the knowledge base",
+         ">>= check - check for the consistency of the knowledge base",
+         ">>= hedge structure - print the information about the under-\
+          \\n    lying hedge algebra",
+         "--------------------------------------------------------------",
+         ">>= add clause - add a new clause to the knowledge base",
+         ">>= delete clause - remove a clause from the knowledge base",
+         ">>= change clause - change a clause in the knowledge base",
+         "--------------------------------------------------------------",
+         ">>= back - go back to main menu",
+         "==============================================================",
+         "\n"                    
+         ]
+kbManager dbname = do
+          putStrLn "\n\nYour wish is my command: \n"
+          command <- readline'' "[KB MANAGER]> "   
+          case command of
+                  "cmenu" -> mapM_ putStrLn cmenu >> getLine >> kbManager dbname         
+                  "check" -> do
+                          putStrLn "Checking ..."
+                          knowledgebase <- getCNF dbname
+                          let res = resolution'' (toClause knowledgebase) []
+                          --print res
+                          case res of
+                                  Nothing -> putStrLn "\nKB is consistent"
+                                  Just x  -> putStrLn "\n[WARNING!!] KB is inconsistent"
+                          kbManager dbname        
+                  "print" -> do
+                          kb <- getCNF dbname
+                          let kbb = map (\(CNF x) -> x) kb
+                          let res = map (map (\x -> show x)) kbb
+                          let ress = map (concat . intersperse " OR ") res
+                          mapM_ (\x-> print x >> putStrLn "") ress
+                          --print kb                               
+                          q <- getLine
+                          kbManager dbname        
+                  "add clause" -> do
+                          putStrLn "Enter a clause: "
+                          putStrLn "-- Please enter it in the format\n \
+                            \  <statement> :: <truth-value> [OR|,|;] <statement> :: <truth-value> [OR|,|;]..."
+                          line <- readline'' "[ADD CLAUSE]> "   
+                          addClause dbname line
+                          kbManager dbname        
+                  "delete clause" -> do
+                          putStrLn "Enter the clause to be deleted: "
+                          line <- readline'' "[DELETE CLAUSE]> "   
+                          deleteClause dbname line
+                          kbManager dbname        
+                  "change clause" -> do
+                          putStrLn "Enter the clause to be changed: "
+                          line <- readline'' "[CHANGE CLAUSE]> "  
+                          putStrLn "Enter new clause: "
+                          putStrLn "-- Please enter it in the format\n \
+                           \  <statement> :: <truth-value> [OR|,|;] <statement> :: <truth-value> [OR|,|;]..."             
+                          newclause <- readline'' "[CHANGE CLAUSE]> " 
+                          changeClause dbname line newclause
+                          kbManager dbname        
+                  "hedge structure" -> printHedges dbname >> getLine >> kbManager dbname        
+                  "back" -> return ()                     
+                  _ -> putStrLn "Please enter something meaningful" >> kbManager dbname
