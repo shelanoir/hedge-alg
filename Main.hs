@@ -67,12 +67,12 @@ cli dbname = do
                           input <- return parseGoals `ap` readline'' "[PROVE]> "
                           when ((Lit "" Maxt) `elem` input) $ putStrLn 
                                   "Seems like your proposition is ill-formatted"                                
-                          print (CNF input)
+                          --print (CNF input)
 
                           putStrLn "Explain the result? [y/n]"
                           inputM <- (liftM $map toUpper) $ readline'' "[EXPLAIN?]> "
                           knowledgebase <- getCNF dbname
-                          putStrLn $ show knowledgebase
+                          putStrLn $ show knowledgebase ++ show (CNF input)
                           let (res,traceL) = prove knowledgebase (CNF input)
                           case res of
                             Nothing -> putStrLn $ show res ++ ": the proposition is not provable"
