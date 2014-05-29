@@ -76,8 +76,8 @@ cli dbname = do
                           let (res,traceL) = prove knowledgebase (CNF input)
                           case res of
                             Nothing -> putStrLn $ show res ++ ": the proposition is not provable"
-                            _   -> putStrLn $ "The confidence is: " ++ show res
-                          putStrLn $ show res
+                            (Just x)   -> putStrLn $ "The confidence is: " ++ show x
+                          --putStrLn $ show res
                           unless (res == Nothing || inputM /= "Y") $
                             do let (Just ress) = res
                                let tracL = retrace (nil,ress) traceL []
@@ -124,8 +124,10 @@ kbManager dbname = do
                   "print" -> do
                           kb <- getCNF dbname
                           let kbb = map (\(CNF x) -> x) kb
-                          print kbb
-                          --putStrLn $ show kb                               
+                          let res = map (map (\x -> show x)) kbb
+                          let ress = map (concat . intersperse " OR ") res
+                          mapM_ (\x-> print x >> putStrLn "") ress
+                          --print kb                               
                           q <- getLine
                           kbManager dbname        
                   "add clause" -> do

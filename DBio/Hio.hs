@@ -309,8 +309,8 @@ hMMenu = ["=============================================================",
           ">>= rm negative relation - add a new negative relation",
           "-------------------------------------------------",      
           ">>= hmenu - print this menu",
-          ">>= main - reload hedge algebra and go to main menu",                    
-          ">>= quit - exit without reload HA",                    
+          ">>= reload - reload hedge algebra and go back",                    
+          ">>= quit - go back without reload ",                    
           "============================================================="
           ]
 hManager :: String -> IO ()
