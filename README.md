@@ -27,13 +27,18 @@ To install HDBC and its SQLite3's back end"
 sudo apt-get install libghc-hdbc-dev
 sudo apt-get install libghc-hdbc-sqlite3-dev
 
-================
-Using the system
-================
-To use the system, in the source directory of the system, invoke
+=================
+Using the program
+=================
+To use the program, in the source directory of the system, invoke
 the following command:
 
 runhaskell Main.hs <db-name>
 
 Where <db-name> is the path to a sqlite3 database file. There is
 a sample database named example.db in the source directory.
+
+After that, the program will enter an interactive loop. From here
+on the user can interact with the program by using command as
+specified by the program. To see what you can do in the
+interactive loop, use the command ``menu''.
