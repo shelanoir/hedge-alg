@@ -46,8 +46,8 @@ resolution xs = resolution' xs {-xs-} [] [] sympair
 
                 
 resolution' allClauses resolved trace sympair 
-        | saturizedRes == allClauses = (lookup [nilH] saturizedRes, trace)        
-        | resolved == nextResolved = (lookup [nilH] saturizedRes, trace)
+        | saturizedRes == allClauses = (lookup [nilH] saturizedRes, trace, saturizedRes)        
+        | resolved == nextResolved = (lookup [nilH] saturizedRes, trace, saturizedRes)
         | otherwise = resolution' saturizedRes nextResolved nextTrace sympair
         where 
               als = [(res,clause1,clause2) | clause1 <- allClauses, 

@@ -24,6 +24,7 @@ import Data.List
 ---Literal:
 data Lit hedge = Lit String (Truth hedge) deriving (Eq, Read)
 instance Show hedge => Show (Lit hedge) where
+        show (Lit "" Maxt) = "<NULL>"
         show (Lit x truth) = "<" ++ x ++ ": " ++ show truth ++ ">"
 
 truthLit (Lit string truth) = truth 
