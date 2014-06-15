@@ -20,12 +20,9 @@ Likewise this library also requires readline already on the system
 
 Most of these libraries can be installed along with the Haskell
 Platform. To install the Haskell Platform on a Debian-based
-system:
-sudo apt-get install haskell-platform
+system, along with all the dependencies required for this system, run:
+sudo apt-get install haskell-platform libghc-hdbc-dev libghc-hdbc-sqlite3-dev libghc-readline-dev libghc-executable-path-dev
 
-To install HDBC and its SQLite3's back end"
-sudo apt-get install libghc-hdbc-dev
-sudo apt-get install libghc-hdbc-sqlite3-dev
 
 =================
 Using the program
