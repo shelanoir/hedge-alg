@@ -409,17 +409,18 @@ addClause dbname line = do
         
         ----Check if there were any cnf exactly the same as the
         ----one being added
---        print sqlval
+        print sqlval
         lids1 <- forM sqlval (\x -> quickQuery' conn "SELECT lid FROM literal WHERE \
                                                 \ lstring = ? AND sid IS ? AND truthval = ?"
                                                x)
-  --      print lidss1
+        print lids1
 {-        let lids1 = case lidss1 of
                         [[]] -> [[[SqlNull]]]
                         _ -> lidss1-}
+        print $ concat $ map (map head) lids1                
         cid1 <- (\x-> quickQuery' conn "SELECT conjLits.cid FROM \ 
                         \ conjLits JOIN literal ON conjLits.lid = literal.lid \
-                        \ WHERE literal.lid IS ?" $ concat x) $ map (map head) lids1
+                        \ WHERE literal.lid IS ?" $ head x) $ map (map head) lids1
   --      putStrLn $ "cids "++ show cid1
         lids2 <- forM cid1 (\x -> quickQuery' conn "SELECT conjLits.lid FROM \
                         \ conjLits WHERE conjLits.cid = ?" x)
@@ -430,7 +431,7 @@ addClause dbname line = do
             lids2' = map (map fromSql) lids2'' :: [[Int]]
         {-let lids1' = sort . map head . concat . map (map $ map fromSql) $ lids1 :: [Int]
             lids2' = sort . map head .  map (map $ map fromSql) $ lids2 :: [[Int]]   -}
-      --  putStrLn $ show lids1' ++ show lids2'    
+        putStrLn $ show lids1' ++ show lids2'    
         if (not (lids1' `elem` lids2')) then do
                 q <- run conn "INSERT INTO conj (name) VALUES (?)" [toSql "Just inserted"]
                 cid' <- quickQuery' conn "SELECT cid FROM conj WHERE name = ?" [toSql "Just inserted"]
