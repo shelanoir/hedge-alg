@@ -73,7 +73,7 @@ cli dbname = do
                           inputM <- (liftM $map toUpper) $ readline'' "[EXPLAIN?]> "
                           knowledgebase <- getCNF dbname
                           --putStrLn $ show knowledgebase ++ show (CNF input)
-                          let (res,traceL) = prove knowledgebase (CNF input)
+                          let (res,traceL, satur) = prove knowledgebase (CNF input)
                           case res of
                             Nothing -> putStrLn $ show res ++ ": the proposition is not provable"
                             (Just x)   -> putStrLn $ "The confidence is: " ++ show x
@@ -83,6 +83,7 @@ cli dbname = do
                                let tracL = retrace (nil,ress) traceL []
                                putStrLn tracL                                     
                           --print trace
+                          writeFile "./saturated" $ concat $ map (\x -> show x ++ "\n") satur
                           return ()                                        
                   "quit"  -> exitImmediately ExitSuccess
                   "hedge manager" -> do
